@@ -89,7 +89,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
   const playerStats = calculateTotalStats(session.player);
 
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column" minHeight={30}>
       {/* ヘッダー */}
       <Box borderStyle="double" padding={1} marginBottom={1}>
         <Text bold>⚔️  戦闘詳細</Text>

@@ -230,7 +230,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
   });
 
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column" minHeight={30}>
       {/* ヘッダー */}
       <Box borderStyle="double" padding={1} marginBottom={1}>
         <Text bold>🎒 装備管理</Text>

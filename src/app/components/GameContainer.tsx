@@ -4,6 +4,7 @@ import type { Session, Item, BattleEvent, BaseItem, ItemId, Skill } from "../../
 import { processBattleTurn, processAction } from "../../core/session.ts";
 import { BattleDetailView } from "./BattleDetailView.tsx";
 import { EquipmentDetailView } from "./EquipmentDetailView.tsx";
+import { ClearScreen } from "./ClearScreen.tsx";
 
 type Props = {
   session: Session;
@@ -29,6 +30,7 @@ export const GameContainer: React.FC<Props> = ({
   const [inventory, setInventory] = useState<Item[]>([]);
   const [turn, setTurn] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("battle");
+  const [viewKey, setViewKey] = useState(0); // 画面切り替え時のキー
 
   // バトル自動進行
   useEffect(() => {
@@ -80,6 +82,7 @@ export const GameContainer: React.FC<Props> = ({
     // Tab でビュー切り替え
     if (key.tab) {
       setViewMode(viewMode === "battle" ? "equipment" : "battle");
+      setViewKey(prev => prev + 1); // キーを更新して再マウント
     }
 
     // P キーで一時停止
@@ -125,24 +128,24 @@ export const GameContainer: React.FC<Props> = ({
     setInventory(updatedInventory);
   };
 
-  // ビューの表示
-  if (viewMode === "battle") {
-    return (
-      <BattleDetailView
-        session={session}
-        battleLog={battleLog}
-        isPaused={isPaused}
-      />
-    );
-  } else {
-    return (
-      <EquipmentDetailView
-        session={session}
-        onSessionUpdate={handleSessionUpdate}
-        inventory={inventory}
-        onInventoryUpdate={handleInventoryUpdate}
-        battleStatus={battleStatus}
-      />
-    );
-  }
+  // ビューの表示（画面クリア付き）
+  return (
+    <ClearScreen key={`view-${viewKey}`}>
+      {viewMode === "battle" ? (
+        <BattleDetailView
+          session={session}
+          battleLog={battleLog}
+          isPaused={isPaused}
+        />
+      ) : (
+        <EquipmentDetailView
+          session={session}
+          onSessionUpdate={handleSessionUpdate}
+          inventory={inventory}
+          onInventoryUpdate={handleInventoryUpdate}
+          battleStatus={battleStatus}
+        />
+      )}
+    </ClearScreen>
+  );
 };
