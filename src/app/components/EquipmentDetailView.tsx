@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Session, Item, EquipmentSlot, Gold, Skill } from "../../core/types.ts";
+import type { Session, Item, EquipmentSlot, Gold, Skill, ItemId } from "../../core/types.ts";
 import { processAction } from "../../core/session.ts";
 import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
 import { calculateTotalStats } from "../../core/combat.ts";
@@ -46,6 +46,8 @@ const CompactBattleStatus: React.FC<{ battleStatus: Props["battleStatus"] }> = (
   );
 };
 
+type InventoryTab = "recent" | "weapon" | "armor" | "accessory" | "all";
+
 export const EquipmentDetailView: React.FC<Props> = ({
   session,
   onSessionUpdate,
@@ -57,15 +59,57 @@ export const EquipmentDetailView: React.FC<Props> = ({
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [inventoryPage, setInventoryPage] = useState(0);
   const [autoSelectSlot, setAutoSelectSlot] = useState(true);
+  const [inventoryTab, setInventoryTab] = useState<InventoryTab>("recent");
+  const [recentItems, setRecentItems] = useState<Set<ItemId>>(new Set());
 
   const ITEMS_PER_PAGE = 15;
   const playerStats = calculateTotalStats(session.player);
 
-  const totalPages = Math.ceil(inventory.length / ITEMS_PER_PAGE);
-  const currentPageItems = inventory.slice(
+  // タブごとのアイテムフィルタリング
+  const getFilteredItems = (): Item[] => {
+    switch (inventoryTab) {
+      case "recent":
+        return inventory.filter(item => recentItems.has(item.id));
+      case "weapon":
+        return inventory.filter(item => item.baseItem.type === "Weapon");
+      case "armor":
+        return inventory.filter(item => item.baseItem.type === "Armor");
+      case "accessory":
+        return inventory.filter(item => item.baseItem.type === "Accessory");
+      case "all":
+      default:
+        return inventory;
+    }
+  };
+
+  const filteredItems = getFilteredItems();
+  const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  const currentPageItems = filteredItems.slice(
     inventoryPage * ITEMS_PER_PAGE,
     (inventoryPage + 1) * ITEMS_PER_PAGE
   );
+
+  // インベントリに新しいアイテムが追加されたとき
+  useEffect(() => {
+    const newItems = new Set(recentItems);
+    inventory.forEach(item => {
+      if (!Array.from(recentItems).some(id => id === item.id)) {
+        newItems.add(item.id);
+      }
+    });
+    // 最新20個のみ保持
+    const itemsArray = Array.from(newItems);
+    if (itemsArray.length > 20) {
+      itemsArray.slice(-20).forEach(id => newItems.delete(id));
+    }
+    setRecentItems(newItems);
+  }, [inventory.length]);
+
+  // タブ切り替え時にページをリセット
+  useEffect(() => {
+    setInventoryPage(0);
+    setSelectedItemIndex(0);
+  }, [inventoryTab]);
 
   useInput((input, key) => {
     // Tab キーは親コンポーネントで処理するのでスキップ
@@ -73,7 +117,21 @@ export const EquipmentDetailView: React.FC<Props> = ({
       return;
     }
     
-    if (inventory.length > 0) {
+    // 左右キーでタブ切り替え（アイテム未選択時）
+    if (filteredItems.length === 0 || (key.leftArrow && autoSelectSlot)) {
+      const tabs: InventoryTab[] = ["recent", "weapon", "armor", "accessory", "all"];
+      const currentIndex = tabs.indexOf(inventoryTab);
+      if (key.leftArrow) {
+        const newIndex = currentIndex > 0 ? currentIndex - 1 : tabs.length - 1;
+        setInventoryTab(tabs[newIndex]);
+      } else if (key.rightArrow) {
+        const newIndex = currentIndex < tabs.length - 1 ? currentIndex + 1 : 0;
+        setInventoryTab(tabs[newIndex]);
+      }
+      return;
+    }
+    
+    if (filteredItems.length > 0) {
       if (key.upArrow) {
         const newIndex = selectedItemIndex - 1;
         if (newIndex < 0) {
@@ -188,14 +246,44 @@ export const EquipmentDetailView: React.FC<Props> = ({
       <Box flexDirection="row" flexGrow={1}>
         {/* 左側：インベントリ */}
         <Box width="60%" borderStyle="double" padding={1} marginRight={1}>
-          <Box>
-            <Text bold underline>インベントリ</Text>
-            <Text> ({inventory.length}/50) </Text>
-            {totalPages > 1 && <Text dimColor>[{inventoryPage + 1}/{totalPages}]</Text>}
+          {/* インベントリヘッダーとタブ */}
+          <Box flexDirection="column">
+            <Box>
+              <Text bold underline>インベントリ</Text>
+              <Text> ({inventory.length}/50) </Text>
+              {totalPages > 1 && <Text dimColor>[{inventoryPage + 1}/{totalPages}]</Text>}
+            </Box>
+            
+            {/* タブ表示 */}
+            <Box marginTop={1}>
+              {(() => {
+                const tabs = [
+                  { key: "recent", label: "新着", emoji: "🆕" },
+                  { key: "weapon", label: "武器", emoji: "⚔️" },
+                  { key: "armor", label: "防具", emoji: "🛡️" },
+                  { key: "accessory", label: "装飾", emoji: "💍" },
+                  { key: "all", label: "全て", emoji: "📦" },
+                ];
+                
+                return tabs.map((tab, index) => (
+                  <React.Fragment key={tab.key}>
+                    <Text
+                      color={inventoryTab === tab.key ? "cyan" : "gray"}
+                      bold={inventoryTab === tab.key}
+                    >
+                      {tab.emoji} {tab.label}
+                    </Text>
+                    {index < tabs.length - 1 && <Text> | </Text>}
+                  </React.Fragment>
+                ));
+              })()}
+            </Box>
           </Box>
           
-          {inventory.length === 0 ? (
-            <Text dimColor marginTop={1}>アイテムなし</Text>
+          {filteredItems.length === 0 ? (
+            <Text dimColor marginTop={1}>
+              {inventoryTab === "recent" ? "新着アイテムなし" : "アイテムなし"}
+            </Text>
           ) : (
             <Box flexDirection="column" marginTop={1}>
               {currentPageItems.map((item, index) => {
@@ -218,6 +306,9 @@ export const EquipmentDetailView: React.FC<Props> = ({
                       <Text color={rarityColors[item.rarity]}>
                         {getItemDisplayName(item)}
                       </Text>
+                      {recentItems.has(item.id) && inventoryTab !== "recent" && (
+                        <Text color="green"> 🆕</Text>
+                      )}
                     </Box>
                     {isSelected && (
                       <Box marginLeft={3} flexDirection="column">
@@ -388,7 +479,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
       {/* 操作説明 */}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: アイテム選択 | Space/Enter: 装備 | ←→: スロット選択 | Del: 売却 | Tab: 戦闘詳細へ
+          ↑↓: アイテム | ←→: {filteredItems.length > 0 ? "スロット選択" : "タブ切替"} | Space: 装備 | Del: 売却 | Tab: 戦闘詳細へ
         </Text>
       </Box>
     </Box>
