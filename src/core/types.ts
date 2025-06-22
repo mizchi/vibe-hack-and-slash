@@ -25,6 +25,52 @@ export type Damage = Brand<number, "Damage">;
 export type Health = Brand<number, "Health">;
 export type Level = Brand<number, "Level">;
 export type Experience = Brand<number, "Experience">;
+export type Mana = Brand<number, "Mana">;
+export type SkillId = Brand<string, "SkillId">;
+export type Gold = Brand<number, "Gold">;
+
+// プレイヤータイプ
+export type PlayerClass = "Warrior" | "Mage" | "Rogue" | "Paladin";
+
+// 装備スロット
+export type EquipmentSlot = 
+  | "MainHand" 
+  | "OffHand" 
+  | "Armor" 
+  | "Helm"
+  | "Gloves"
+  | "Boots"
+  | "Ring1" 
+  | "Ring2"
+  | "Amulet"
+  | "Belt";
+
+// 装備タグ（アイテムが装備可能なスロットを示す）
+export type ItemTag = 
+  | "OneHanded"      // 片手武器
+  | "TwoHanded"      // 両手武器
+  | "Shield"         // 盾
+  | "Staff"          // 杖
+  | "Dagger"         // 短剣
+  | "HeavyArmor"     // 重装甲
+  | "LightArmor"     // 軽装甲
+  | "ClothArmor"     // 布装甲
+  | "Ring"           // 指輪
+  | "Amulet"         // アミュレット
+  | "Belt"           // ベルト
+  | "Helm"           // 兜
+  | "Gloves"         // 手袋
+  | "Boots";         // ブーツ
+
+// プレイヤータイプ別の装備スロット定義
+export type ClassEquipmentSlots = {
+  [key in PlayerClass]: {
+    slots: EquipmentSlot[];
+    restrictions: {
+      [slot in EquipmentSlot]?: ItemTag[]; // そのスロットに装備可能なタグ
+    };
+  };
+};
 
 // アイテムシステム
 export type ItemRarity = "Common" | "Magic" | "Rare" | "Legendary";
@@ -45,7 +91,10 @@ export type ItemModifier =
   | { type: "IncreaseDefense"; value: number }
   | { type: "LifeSteal"; percentage: number }
   | { type: "CriticalChance"; percentage: number }
-  | { type: "CriticalDamage"; multiplier: number };
+  | { type: "CriticalDamage"; multiplier: number }
+  | { type: "IncreaseMana"; value: number }
+  | { type: "ManaRegen"; value: number }
+  | { type: "SkillPower"; percentage: number };
 
 export type ItemType = "Weapon" | "Armor" | "Accessory";
 
@@ -53,7 +102,10 @@ export type BaseItem = {
   id: ItemId;
   name: string;
   type: ItemType;
+  tags: ItemTag[]; // 装備可能なスロットを示すタグ
   baseModifiers: ItemModifier[];
+  requiredLevel?: Level; // 装備レベル制限
+  requiredClass?: PlayerClass[]; // 装備可能なクラス
 };
 
 export type Item = {
@@ -73,19 +125,23 @@ export type CharacterStats = {
   criticalChance: number;
   criticalDamage: number;
   lifeSteal: number;
+  maxMana: Mana;
+  manaRegen: number;
+  skillPower: number;
 };
 
 export type Player = {
   id: PlayerId;
+  class: PlayerClass;
   level: Level;
   experience: Experience;
   currentHealth: Health;
+  currentMana: Mana;
   baseStats: CharacterStats;
-  equipment: {
-    weapon?: Item;
-    armor?: Item;
-    accessory?: Item;
-  };
+  equipment: Map<EquipmentSlot, Item>; // スロットごとの装備
+  skills: Skill[];
+  skillCooldowns: Map<SkillId, number>; // 残りクールダウンターン
+  gold: Gold;
 };
 
 // モンスター
@@ -121,6 +177,41 @@ export type Session = {
   startedAt: Date;
 };
 
+// スキルシステム
+export type SkillType = "Active" | "Passive";
+export type SkillTargetType = "Self" | "Enemy" | "All";
+
+export type SkillEffect =
+  | { type: "Damage"; baseDamage: Damage; scaling: number } // scaling = skillPowerの倍率
+  | { type: "Heal"; baseHeal: Health; scaling: number }
+  | { type: "Buff"; stat: keyof CharacterStats; value: number; duration: number }
+  | { type: "Debuff"; stat: string; value: number; duration: number }
+  | { type: "Stun"; duration: number }
+  | { type: "DamageOverTime"; damage: Damage; duration: number }
+  | { type: "LifeDrain"; percentage: number };
+
+export type SkillTriggerCondition =
+  | { type: "Always" } // 常に発動可能
+  | { type: "HealthBelow"; percentage: number }
+  | { type: "ManaAbove"; percentage: number }
+  | { type: "EnemyHealthBelow"; percentage: number }
+  | { type: "CriticalHit" }
+  | { type: "OnKill" }
+  | { type: "TurnInterval"; interval: number };
+
+export type Skill = {
+  id: SkillId;
+  name: string;
+  description: string;
+  type: SkillType;
+  manaCost: Mana;
+  cooldown: number; // ターン数
+  targetType: SkillTargetType;
+  effects: SkillEffect[];
+  triggerConditions: SkillTriggerCondition[]; // 全て満たす必要がある
+  priority: number; // 高いほど優先
+};
+
 // バトルイベント
 export type BattleEvent =
   | { type: "PlayerAttack"; damage: Damage; isCritical: boolean }
@@ -129,12 +220,18 @@ export type BattleEvent =
   | { type: "MonsterDefeated"; monsterId: MonsterId; experience: Experience }
   | { type: "ItemDropped"; item: Item }
   | { type: "PlayerLevelUp"; newLevel: Level }
-  | { type: "PlayerDefeated" };
+  | { type: "PlayerDefeated" }
+  | { type: "SkillUsed"; skillId: SkillId; skillName: string; manaCost: Mana }
+  | { type: "SkillDamage"; skillName: string; damage: Damage; targetId?: MonsterId }
+  | { type: "SkillHeal"; skillName: string; amount: Health }
+  | { type: "ManaRegenerated"; amount: Mana }
+  | { type: "NotEnoughMana"; skillName: string; required: Mana; current: Mana }
+  | { type: "GoldDropped"; amount: Gold };
 
 // アクション
 export type GameAction =
   | { type: "StartSession" }
   | { type: "PauseSession" }
   | { type: "ResumeSession" }
-  | { type: "EquipItem"; item: Item }
-  | { type: "UnequipItem"; slot: keyof Player["equipment"] };
+  | { type: "EquipItem"; item: Item; slot: EquipmentSlot }
+  | { type: "UnequipItem"; slot: EquipmentSlot };

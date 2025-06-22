@@ -4,34 +4,63 @@
       "id": "sword_basic",
       "name": "Iron Sword",
       "type": "Weapon",
+      "tags": ["OneHanded"],
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 10 }
+        { "type": "IncreaseDamage", "value": 20 }
       ]
     },
     {
       "id": "sword_advanced",
       "name": "Steel Sword",
       "type": "Weapon",
+      "tags": ["OneHanded"],
+      "requiredLevel": 5,
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 15 }
+        { "type": "IncreaseDamage", "value": 35 }
       ]
     },
     {
       "id": "axe_basic",
       "name": "Battle Axe",
       "type": "Weapon",
+      "tags": ["TwoHanded"],
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 18 },
-        { "type": "CriticalDamage", "multiplier": 0.2 }
+        { "type": "IncreaseDamage", "value": 40 },
+        { "type": "CriticalDamage", "multiplier": 0.4 }
       ]
     },
     {
       "id": "dagger_basic",
       "name": "Swift Dagger",
       "type": "Weapon",
+      "tags": ["Dagger", "OneHanded"],
+      "requiredClass": ["Rogue", "Mage"],
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 8 },
-        { "type": "CriticalChance", "percentage": 0.1 }
+        { "type": "IncreaseDamage", "value": 18 },
+        { "type": "CriticalChance", "percentage": 0.2 }
+      ]
+    },
+    {
+      "id": "staff_basic",
+      "name": "Apprentice Staff",
+      "type": "Weapon",
+      "tags": ["Staff", "TwoHanded"],
+      "requiredClass": ["Mage"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 15 },
+        { "type": "SkillPower", "percentage": 20 },
+        { "type": "IncreaseMana", "value": 20 }
+      ]
+    },
+    {
+      "id": "shield_basic",
+      "name": "Wooden Shield",
+      "type": "Weapon",
+      "tags": ["Shield"],
+      "requiredClass": ["Warrior", "Paladin"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 15 },
+        { "type": "IncreaseHealth", "value": 20 }
       ]
     }
   ],
@@ -40,27 +69,63 @@
       "id": "armor_cloth",
       "name": "Cloth Armor",
       "type": "Armor",
+      "tags": ["ClothArmor"],
       "baseModifiers": [
-        { "type": "IncreaseDefense", "value": 5 },
-        { "type": "IncreaseHealth", "value": 10 }
+        { "type": "IncreaseDefense", "value": 10 },
+        { "type": "IncreaseHealth", "value": 25 }
       ]
     },
     {
       "id": "armor_leather",
       "name": "Leather Armor",
       "type": "Armor",
+      "tags": ["LightArmor"],
+      "requiredLevel": 3,
       "baseModifiers": [
-        { "type": "IncreaseDefense", "value": 10 },
-        { "type": "IncreaseHealth", "value": 20 }
+        { "type": "IncreaseDefense", "value": 20 },
+        { "type": "IncreaseHealth", "value": 50 }
       ]
     },
     {
       "id": "armor_chain",
       "name": "Chainmail",
       "type": "Armor",
+      "tags": ["HeavyArmor"],
+      "requiredClass": ["Warrior", "Paladin"],
+      "requiredLevel": 5,
       "baseModifiers": [
-        { "type": "IncreaseDefense", "value": 15 },
-        { "type": "IncreaseHealth", "value": 30 }
+        { "type": "IncreaseDefense", "value": 35 },
+        { "type": "IncreaseHealth", "value": 75 }
+      ]
+    },
+    {
+      "id": "helm_basic",
+      "name": "Iron Helm",
+      "type": "Armor",
+      "tags": ["Helm"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 8 },
+        { "type": "IncreaseHealth", "value": 15 }
+      ]
+    },
+    {
+      "id": "gloves_basic",
+      "name": "Leather Gloves",
+      "type": "Armor",
+      "tags": ["Gloves"],
+      "baseModifiers": [
+        { "type": "CriticalChance", "percentage": 0.05 },
+        { "type": "IncreaseDamage", "value": 5 }
+      ]
+    },
+    {
+      "id": "boots_basic",
+      "name": "Leather Boots",
+      "type": "Armor",
+      "tags": ["Boots"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 5 },
+        { "type": "IncreaseHealth", "value": 10 }
       ]
     }
   ],
@@ -69,24 +134,38 @@
       "id": "ring_basic",
       "name": "Iron Ring",
       "type": "Accessory",
+      "tags": ["Ring"],
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 3 }
+        { "type": "IncreaseDamage", "value": 8 }
       ]
     },
     {
       "id": "amulet_health",
       "name": "Health Amulet",
       "type": "Accessory",
+      "tags": ["Amulet"],
       "baseModifiers": [
-        { "type": "IncreaseHealth", "value": 25 }
+        { "type": "IncreaseHealth", "value": 60 }
       ]
     },
     {
       "id": "ring_vampire",
       "name": "Vampire Ring",
       "type": "Accessory",
+      "tags": ["Ring"],
+      "requiredLevel": 8,
       "baseModifiers": [
-        { "type": "LifeSteal", "percentage": 0.05 }
+        { "type": "LifeSteal", "percentage": 0.15 }
+      ]
+    },
+    {
+      "id": "belt_basic",
+      "name": "Leather Belt",
+      "type": "Accessory",
+      "tags": ["Belt"],
+      "baseModifiers": [
+        { "type": "IncreaseHealth", "value": 30 },
+        { "type": "IncreaseDefense", "value": 5 }
       ]
     }
   ]

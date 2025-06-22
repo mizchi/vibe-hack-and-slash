@@ -4,6 +4,9 @@ import type {
   Monster,
   Damage,
   Health,
+  Mana,
+  Level,
+  Experience,
   BattleEvent,
   CharacterStats,
   Item,
@@ -12,9 +15,9 @@ import type {
 // ステータス計算
 export const calculateTotalStats = (player: Player): CharacterStats => {
   const base = { ...player.baseStats };
-  const equipment = [player.equipment.weapon, player.equipment.armor, player.equipment.accessory];
   
-  equipment.forEach((item) => {
+  // Map から装備アイテムを取得
+  player.equipment.forEach((item) => {
     if (!item) return;
     
     const allModifiers = [
@@ -42,6 +45,15 @@ export const calculateTotalStats = (player: Player): CharacterStats => {
           break;
         case "CriticalDamage":
           base.criticalDamage += mod.multiplier;
+          break;
+        case "IncreaseMana":
+          base.maxMana = (base.maxMana + mod.value) as Mana;
+          break;
+        case "ManaRegen":
+          base.manaRegen += mod.value;
+          break;
+        case "SkillPower":
+          base.skillPower += mod.percentage;
           break;
       }
     });
@@ -154,8 +166,11 @@ export const applyExperience = (
           ...player.baseStats,
           maxHealth: (player.baseStats.maxHealth + 10) as Health,
           damage: (player.baseStats.damage + 2) as Damage,
+          maxMana: (player.baseStats.maxMana + 5) as Mana,
+          manaRegen: player.baseStats.manaRegen + 1,
         },
         currentHealth: (player.currentHealth + 10) as Health,
+        currentMana: (player.currentMana + 5) as Mana,
       },
       leveledUp: true,
     };

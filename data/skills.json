@@ -1,0 +1,169 @@
+{
+  "skills": [
+    {
+      "id": "fireball",
+      "name": "ファイアボール",
+      "description": "炎の球を放つ基本的な魔法攻撃",
+      "type": "Active",
+      "manaCost": 10,
+      "cooldown": 0,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 15,
+          "scaling": 0.8
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 5
+    },
+    {
+      "id": "heal",
+      "name": "ヒール",
+      "description": "自身のHPを回復する",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 3,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Heal",
+          "baseHeal": 30,
+          "scaling": 0.5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 3
+    },
+    {
+      "id": "emergency_heal",
+      "name": "緊急治療",
+      "description": "HPが30%以下の時に自動発動する強力な回復",
+      "type": "Active",
+      "manaCost": 25,
+      "cooldown": 10,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Heal",
+          "baseHeal": 60,
+          "scaling": 1.0
+        }
+      ],
+      "triggerConditions": [
+        { "type": "HealthBelow", "percentage": 0.3 }
+      ],
+      "priority": 10
+    },
+    {
+      "id": "power_strike",
+      "name": "パワーストライク",
+      "description": "強力な物理攻撃",
+      "type": "Active",
+      "manaCost": 20,
+      "cooldown": 2,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 30,
+          "scaling": 1.2
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 6
+    },
+    {
+      "id": "execute",
+      "name": "処刑",
+      "description": "敵のHPが20%以下の時に大ダメージ",
+      "type": "Active",
+      "manaCost": 30,
+      "cooldown": 5,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 50,
+          "scaling": 1.5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "EnemyHealthBelow", "percentage": 0.2 }
+      ],
+      "priority": 9
+    },
+    {
+      "id": "blood_drain",
+      "name": "ブラッドドレイン",
+      "description": "ダメージを与えつつHPを吸収",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 1,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 20,
+          "scaling": 0.6
+        },
+        {
+          "type": "LifeDrain",
+          "percentage": 0.5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 4
+    },
+    {
+      "id": "critical_burst",
+      "name": "クリティカルバースト",
+      "description": "クリティカルヒット時に追加ダメージ",
+      "type": "Active",
+      "manaCost": 5,
+      "cooldown": 0,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 10,
+          "scaling": 0.5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "CriticalHit" }
+      ],
+      "priority": 8
+    },
+    {
+      "id": "meditation",
+      "name": "瞑想",
+      "description": "5ターンごとに大量のマナを回復",
+      "type": "Active",
+      "manaCost": 0,
+      "cooldown": 5,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Heal",
+          "baseHeal": 0,
+          "scaling": 0
+        }
+      ],
+      "triggerConditions": [
+        { "type": "TurnInterval", "interval": 5 },
+        { "type": "ManaAbove", "percentage": 0 }
+      ],
+      "priority": 2
+    }
+  ]
+}

@@ -14,28 +14,84 @@ import type {
   PlayerId,
   Level,
   Health,
+  Mana,
   Damage,
   Experience,
+  Skill,
+  PlayerClass,
+  EquipmentSlot,
+  Gold,
 } from "./types.ts";
 import { playerAttack, monsterAttack, applyExperience } from "./combat.ts";
 import { rollLoot } from "./loot.ts";
+import { getAvailableSkills, applySkillEffects, regenerateMana, tickCooldowns } from "./skills.ts";
 
-// 初期プレイヤー作成
-export const createInitialPlayer = (id: PlayerId): Player => ({
-  id,
-  level: 1 as Level,
-  experience: 0 as Experience,
-  currentHealth: 100 as Health,
-  baseStats: {
-    maxHealth: 100 as Health,
-    damage: 10 as Damage,
-    defense: 0,
+// クラス別の初期ステータス
+const CLASS_BASE_STATS = {
+  Warrior: {
+    maxHealth: 120 as Health,
+    damage: 15 as Damage,
+    defense: 5,
     criticalChance: 0.1,
     criticalDamage: 1.5,
     lifeSteal: 0,
+    maxMana: 30 as Mana,
+    manaRegen: 5,
+    skillPower: 5,
   },
-  equipment: {},
-});
+  Mage: {
+    maxHealth: 80 as Health,
+    damage: 8 as Damage,
+    defense: 0,
+    criticalChance: 0.15,
+    criticalDamage: 2.0,
+    lifeSteal: 0,
+    maxMana: 100 as Mana,
+    manaRegen: 15,
+    skillPower: 20,
+  },
+  Rogue: {
+    maxHealth: 90 as Health,
+    damage: 12 as Damage,
+    defense: 2,
+    criticalChance: 0.25,
+    criticalDamage: 2.5,
+    lifeSteal: 0.05,
+    maxMana: 50 as Mana,
+    manaRegen: 8,
+    skillPower: 10,
+  },
+  Paladin: {
+    maxHealth: 110 as Health,
+    damage: 12 as Damage,
+    defense: 8,
+    criticalChance: 0.1,
+    criticalDamage: 1.5,
+    lifeSteal: 0.02,
+    maxMana: 60 as Mana,
+    manaRegen: 10,
+    skillPower: 15,
+  },
+};
+
+// 初期プレイヤー作成
+export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Warrior"): Player => {
+  const baseStats = CLASS_BASE_STATS[playerClass];
+  
+  return {
+    id,
+    class: playerClass,
+    level: 1 as Level,
+    experience: 0 as Experience,
+    currentHealth: baseStats.maxHealth,
+    currentMana: baseStats.maxMana,
+    baseStats,
+    equipment: new Map(),
+    skills: [],
+    skillCooldowns: new Map(),
+    gold: 100 as Gold, // 初期ゴールド
+  };
+};
 
 // セッション作成
 export const createSession = (
@@ -96,6 +152,8 @@ export const processBattleTurn = (
   session: Session,
   baseItems: Map<ItemId, BaseItem>,
   monsterTemplates: any[],
+  skills: Skill[] = [],
+  turn: number = 0,
   random: () => number = Math.random
 ): Result<TurnResult, GameError> => {
   if (session.state !== "InProgress") {
@@ -111,12 +169,36 @@ export const processBattleTurn = (
     currentMonster = spawnMonster(monsterTemplates, currentPlayer.level, random);
   }
   
-  // プレイヤー攻撃
-  const playerAttackResult = playerAttack(currentPlayer, currentMonster, random);
-  if (!playerAttackResult.ok) return playerAttackResult;
+  // マナ回復
+  const { player: playerWithMana, manaRegenerated } = regenerateMana(currentPlayer);
+  currentPlayer = playerWithMana;
+  if (manaRegenerated > 0) {
+    events.push({ type: "ManaRegenerated", amount: manaRegenerated });
+  }
   
-  events.push(...playerAttackResult.value.events);
-  currentMonster = playerAttackResult.value.updatedMonster;
+  // クールダウン減少
+  currentPlayer = tickCooldowns(currentPlayer);
+  
+  // 利用可能なスキルをチェック
+  const lastEvent = events[events.length - 1];
+  const availableSkills = getAvailableSkills(currentPlayer, currentMonster, lastEvent, turn);
+  
+  // 最優先スキルを使用
+  if (availableSkills.length > 0 && currentMonster.currentHealth > 0) {
+    const skillResult = applySkillEffects(availableSkills[0], currentPlayer, currentMonster, random);
+    events.push(...skillResult.events);
+    currentPlayer = skillResult.updatedPlayer;
+    if (skillResult.updatedMonster) {
+      currentMonster = skillResult.updatedMonster;
+    }
+  } else if (currentMonster.currentHealth > 0) {
+    // 通常攻撃（スキルを使わなかった場合）
+    const playerAttackResult = playerAttack(currentPlayer, currentMonster, random);
+    if (!playerAttackResult.ok) return playerAttackResult;
+    
+    events.push(...playerAttackResult.value.events);
+    currentMonster = playerAttackResult.value.updatedMonster;
+  }
   
   // ライフスティールによる回復
   const healEvent = events.find(e => e.type === "PlayerHeal");
@@ -199,28 +281,25 @@ export const processAction = (
       return Ok({ ...session, state: "InProgress" });
       
     case "EquipItem":
-      const { item } = action;
-      const slot = item.baseItem.type.toLowerCase() as keyof Player["equipment"];
+      const { item, slot } = action;
+      const newEquipment = new Map(session.player.equipment);
+      newEquipment.set(slot, item);
       return Ok({
         ...session,
         player: {
           ...session.player,
-          equipment: {
-            ...session.player.equipment,
-            [slot]: item,
-          },
+          equipment: newEquipment,
         },
       });
       
     case "UnequipItem":
+      const updatedEquipment = new Map(session.player.equipment);
+      updatedEquipment.delete(action.slot);
       return Ok({
         ...session,
         player: {
           ...session.player,
-          equipment: {
-            ...session.player.equipment,
-            [action.slot]: undefined,
-          },
+          equipment: updatedEquipment,
         },
       });
       

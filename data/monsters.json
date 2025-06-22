@@ -6,7 +6,7 @@
       "levelRange": { "min": 1, "max": 3 },
       "baseStats": {
         "health": 30,
-        "damage": 5,
+        "damage": 3,
         "defense": 0,
         "criticalChance": 0.05,
         "criticalDamage": 1.5,
@@ -15,22 +15,42 @@
       "lootTable": [
         {
           "baseItemId": "sword_basic",
-          "dropChance": 0.1,
+          "dropChance": 0.9,
           "rarityWeights": {
-            "common": 70,
-            "magic": 25,
-            "rare": 4,
-            "legendary": 1
+            "common": 40,
+            "magic": 40,
+            "rare": 15,
+            "legendary": 5
           }
         },
         {
           "baseItemId": "armor_cloth",
-          "dropChance": 0.15,
+          "dropChance": 0.95,
           "rarityWeights": {
-            "common": 80,
-            "magic": 18,
-            "rare": 2,
-            "legendary": 0
+            "common": 45,
+            "magic": 35,
+            "rare": 15,
+            "legendary": 5
+          }
+        },
+        {
+          "baseItemId": "ring_basic",
+          "dropChance": 0.4,
+          "rarityWeights": {
+            "common": 50,
+            "magic": 30,
+            "rare": 15,
+            "legendary": 5
+          }
+        },
+        {
+          "baseItemId": "boots_basic",
+          "dropChance": 0.3,
+          "rarityWeights": {
+            "common": 75,
+            "magic": 20,
+            "rare": 4,
+            "legendary": 1
           }
         }
       ]
@@ -41,7 +61,7 @@
       "levelRange": { "min": 3, "max": 6 },
       "baseStats": {
         "health": 60,
-        "damage": 12,
+        "damage": 8,
         "defense": 5,
         "criticalChance": 0.1,
         "criticalDamage": 1.75,
@@ -50,27 +70,37 @@
       "lootTable": [
         {
           "baseItemId": "axe_basic",
-          "dropChance": 0.15,
+          "dropChance": 1.0,
           "rarityWeights": {
-            "common": 60,
-            "magic": 30,
-            "rare": 8,
-            "legendary": 2
+            "common": 50,
+            "magic": 35,
+            "rare": 12,
+            "legendary": 3
           }
         },
         {
           "baseItemId": "armor_leather",
-          "dropChance": 0.2,
+          "dropChance": 1.0,
           "rarityWeights": {
-            "common": 70,
-            "magic": 25,
-            "rare": 4,
-            "legendary": 1
+            "common": 55,
+            "magic": 30,
+            "rare": 12,
+            "legendary": 3
           }
         },
         {
           "baseItemId": "ring_basic",
-          "dropChance": 0.1,
+          "dropChance": 0.5,
+          "rarityWeights": {
+            "common": 40,
+            "magic": 40,
+            "rare": 15,
+            "legendary": 5
+          }
+        },
+        {
+          "baseItemId": "amulet_health",
+          "dropChance": 0.4,
           "rarityWeights": {
             "common": 50,
             "magic": 35,
@@ -86,7 +116,7 @@
       "levelRange": { "min": 5, "max": 8 },
       "baseStats": {
         "health": 80,
-        "damage": 15,
+        "damage": 10,
         "defense": 10,
         "criticalChance": 0.15,
         "criticalDamage": 2.0,
@@ -95,27 +125,37 @@
       "lootTable": [
         {
           "baseItemId": "sword_advanced",
-          "dropChance": 0.2,
+          "dropChance": 1.0,
           "rarityWeights": {
-            "common": 50,
-            "magic": 35,
-            "rare": 12,
-            "legendary": 3
+            "common": 40,
+            "magic": 40,
+            "rare": 15,
+            "legendary": 5
           }
         },
         {
           "baseItemId": "armor_chain",
-          "dropChance": 0.15,
+          "dropChance": 1.0,
           "rarityWeights": {
-            "common": 60,
-            "magic": 30,
-            "rare": 8,
-            "legendary": 2
+            "common": 45,
+            "magic": 35,
+            "rare": 15,
+            "legendary": 5
           }
         },
         {
           "baseItemId": "amulet_health",
-          "dropChance": 0.12,
+          "dropChance": 0.9,
+          "rarityWeights": {
+            "common": 30,
+            "magic": 45,
+            "rare": 20,
+            "legendary": 5
+          }
+        },
+        {
+          "baseItemId": "ring_vampire",
+          "dropChance": 0.4,
           "rarityWeights": {
             "common": 40,
             "magic": 40,
@@ -131,7 +171,7 @@
       "levelRange": { "min": 8, "max": 12 },
       "baseStats": {
         "health": 120,
-        "damage": 20,
+        "damage": 14,
         "defense": 15,
         "criticalChance": 0.2,
         "criticalDamage": 2.5,

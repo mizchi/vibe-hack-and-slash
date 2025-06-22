@@ -6,6 +6,9 @@
   "scripts": {
     "start": "tsx src/app/index.tsx",
     "dev": "tsx watch src/app/index.tsx",
+    "simulate": "tsx src/app/simulate.ts",
+    "evaluate": "tsx src/app/evaluate.ts",
+    "evaluate:ai": "tsx scripts/evaluate-battle.ts",
     "poc:ink-no-input": "tsx poc/02-ink-no-input.tsx",
     "build": "tsc",
     "test": "vitest",
@@ -27,6 +30,7 @@
     "react": "^18.3.1"
   },
   "devDependencies": {
+    "@anthropic-ai/claude-code": "^0.0.4",
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.14",

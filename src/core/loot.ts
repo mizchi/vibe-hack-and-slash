@@ -9,28 +9,37 @@ import type {
   ItemId,
 } from "./types.ts";
 
-// Prefix/Suffixのプール
+// Prefix/Suffixのプール（レアリティによって効果を増幅）
 export const ITEM_PREFIXES: ItemPrefix[] = [
-  { name: "Sharp", modifiers: [{ type: "IncreaseDamage", value: 5 }] },
-  { name: "Brutal", modifiers: [{ type: "IncreaseDamage", value: 10 }] },
-  { name: "Vampiric", modifiers: [{ type: "LifeSteal", percentage: 0.1 }] },
-  { name: "Precise", modifiers: [{ type: "CriticalChance", percentage: 0.1 }] },
-  { name: "Devastating", modifiers: [{ type: "CriticalDamage", multiplier: 0.5 }] },
-  { name: "Sturdy", modifiers: [{ type: "IncreaseHealth", value: 20 }] },
-  { name: "Fortified", modifiers: [{ type: "IncreaseDefense", value: 10 }] },
+  { name: "Sharp", modifiers: [{ type: "IncreaseDamage", value: 12 }] },
+  { name: "Brutal", modifiers: [{ type: "IncreaseDamage", value: 25 }] },
+  { name: "Vampiric", modifiers: [{ type: "LifeSteal", percentage: 0.2 }] },
+  { name: "Precise", modifiers: [{ type: "CriticalChance", percentage: 0.15 }] },
+  { name: "Devastating", modifiers: [{ type: "CriticalDamage", multiplier: 0.75 }] },
+  { name: "Sturdy", modifiers: [{ type: "IncreaseHealth", value: 40 }] },
+  { name: "Fortified", modifiers: [{ type: "IncreaseDefense", value: 20 }] },
+  { name: "Mystic", modifiers: [{ type: "IncreaseMana", value: 30 }] },
+  { name: "Arcane", modifiers: [{ type: "SkillPower", percentage: 25 }] },
+  { name: "Flowing", modifiers: [{ type: "ManaRegen", value: 6 }] },
 ];
 
 export const ITEM_SUFFIXES: ItemSuffix[] = [
-  { name: "of Power", modifiers: [{ type: "IncreaseDamage", value: 8 }] },
-  { name: "of Vitality", modifiers: [{ type: "IncreaseHealth", value: 30 }] },
-  { name: "of Protection", modifiers: [{ type: "IncreaseDefense", value: 15 }] },
-  { name: "of the Assassin", modifiers: [{ type: "CriticalChance", percentage: 0.15 }] },
-  { name: "of Destruction", modifiers: [{ type: "CriticalDamage", multiplier: 0.75 }] },
-  { name: "of Blood", modifiers: [{ type: "LifeSteal", percentage: 0.15 }] },
+  { name: "of Power", modifiers: [{ type: "IncreaseDamage", value: 20 }] },
+  { name: "of Vitality", modifiers: [{ type: "IncreaseHealth", value: 60 }] },
+  { name: "of Protection", modifiers: [{ type: "IncreaseDefense", value: 30 }] },
+  { name: "of the Assassin", modifiers: [{ type: "CriticalChance", percentage: 0.25 }] },
+  { name: "of Destruction", modifiers: [{ type: "CriticalDamage", multiplier: 1.0 }] },
+  { name: "of Blood", modifiers: [{ type: "LifeSteal", percentage: 0.25 }] },
   { name: "of the Warrior", modifiers: [
-    { type: "IncreaseDamage", value: 5 },
-    { type: "IncreaseHealth", value: 15 },
+    { type: "IncreaseDamage", value: 15 },
+    { type: "IncreaseHealth", value: 35 },
   ]},
+  { name: "of the Mage", modifiers: [
+    { type: "IncreaseMana", value: 40 },
+    { type: "SkillPower", percentage: 20 },
+  ]},
+  { name: "of Wisdom", modifiers: [{ type: "ManaRegen", value: 10 }] },
+  { name: "of Sorcery", modifiers: [{ type: "SkillPower", percentage: 40 }] },
 ];
 
 // レアリティ決定
@@ -47,6 +56,40 @@ export const determineRarity = (
   return "Legendary";
 };
 
+// レアリティによる倍率
+const RARITY_MULTIPLIERS = {
+  Common: 1.0,
+  Magic: 1.5,
+  Rare: 2.0,
+  Legendary: 3.0,
+};
+
+// モディファイアに倍率を適用
+const applyRarityMultiplier = (
+  modifiers: ItemModifier[],
+  rarity: ItemRarity
+): ItemModifier[] => {
+  const multiplier = RARITY_MULTIPLIERS[rarity];
+  return modifiers.map(mod => {
+    switch (mod.type) {
+      case "IncreaseDamage":
+      case "IncreaseHealth":
+      case "IncreaseDefense":
+      case "IncreaseMana":
+      case "ManaRegen":
+        return { ...mod, value: Math.floor(mod.value * multiplier) };
+      case "LifeSteal":
+      case "CriticalChance":
+      case "SkillPower":
+        return { ...mod, percentage: mod.percentage * multiplier };
+      case "CriticalDamage":
+        return { ...mod, multiplier: mod.multiplier * multiplier };
+      default:
+        return mod;
+    }
+  });
+};
+
 // アイテム生成
 export const generateItem = (
   baseItem: BaseItem,
@@ -54,9 +97,15 @@ export const generateItem = (
   rarity: ItemRarity,
   random: () => number = Math.random
 ): Item => {
+  // ベースアイテムのモディファイアにレアリティ倍率を適用
+  const enhancedBaseItem = {
+    ...baseItem,
+    baseModifiers: applyRarityMultiplier(baseItem.baseModifiers, rarity),
+  };
+  
   const item: Item = {
     id: `${baseItem.id}_${Date.now()}_${Math.floor(random() * 10000)}` as ItemId,
-    baseItem,
+    baseItem: enhancedBaseItem,
     rarity,
     level,
   };
@@ -69,16 +118,32 @@ export const generateItem = (
     case "Magic":
       // PrefixかSuffixのどちらか
       if (random() < 0.5) {
-        item.prefix = ITEM_PREFIXES[Math.floor(random() * ITEM_PREFIXES.length)];
+        const prefix = ITEM_PREFIXES[Math.floor(random() * ITEM_PREFIXES.length)];
+        item.prefix = {
+          ...prefix,
+          modifiers: applyRarityMultiplier(prefix.modifiers, rarity),
+        };
       } else {
-        item.suffix = ITEM_SUFFIXES[Math.floor(random() * ITEM_SUFFIXES.length)];
+        const suffix = ITEM_SUFFIXES[Math.floor(random() * ITEM_SUFFIXES.length)];
+        item.suffix = {
+          ...suffix,
+          modifiers: applyRarityMultiplier(suffix.modifiers, rarity),
+        };
       }
       break;
     case "Rare":
     case "Legendary":
       // 両方付与
-      item.prefix = ITEM_PREFIXES[Math.floor(random() * ITEM_PREFIXES.length)];
-      item.suffix = ITEM_SUFFIXES[Math.floor(random() * ITEM_SUFFIXES.length)];
+      const prefix = ITEM_PREFIXES[Math.floor(random() * ITEM_PREFIXES.length)];
+      const suffix = ITEM_SUFFIXES[Math.floor(random() * ITEM_SUFFIXES.length)];
+      item.prefix = {
+        ...prefix,
+        modifiers: applyRarityMultiplier(prefix.modifiers, rarity),
+      };
+      item.suffix = {
+        ...suffix,
+        modifiers: applyRarityMultiplier(suffix.modifiers, rarity),
+      };
       break;
   }
   
@@ -151,6 +216,15 @@ export const getItemStats = (item: Item): string[] => {
       case "CriticalDamage":
         aggregated.set("critdamage", (aggregated.get("critdamage") || 0) + mod.multiplier * 100);
         break;
+      case "IncreaseMana":
+        aggregated.set("mana", (aggregated.get("mana") || 0) + mod.value);
+        break;
+      case "ManaRegen":
+        aggregated.set("manaregen", (aggregated.get("manaregen") || 0) + mod.value);
+        break;
+      case "SkillPower":
+        aggregated.set("skillpower", (aggregated.get("skillpower") || 0) + mod.percentage);
+        break;
     }
   });
   
@@ -173,6 +247,15 @@ export const getItemStats = (item: Item): string[] => {
         break;
       case "critdamage":
         stats.push(`${value.toFixed(1)}% Critical Damage`);
+        break;
+      case "mana":
+        stats.push(`+${value} Mana`);
+        break;
+      case "manaregen":
+        stats.push(`+${value} Mana Regen`);
+        break;
+      case "skillpower":
+        stats.push(`+${value.toFixed(0)} Skill Power`);
         break;
     }
   });
