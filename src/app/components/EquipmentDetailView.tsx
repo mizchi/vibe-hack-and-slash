@@ -56,9 +56,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
   battleStatus,
 }) => {
   const [selectedItemIndex, setSelectedItemIndex] = useState(0);
-  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [inventoryPage, setInventoryPage] = useState(0);
-  const [autoSelectSlot, setAutoSelectSlot] = useState(true);
   const [inventoryTab, setInventoryTab] = useState<InventoryTab>("recent");
   const [recentItems, setRecentItems] = useState<Set<ItemId>>(new Set());
 
@@ -117,8 +115,8 @@ export const EquipmentDetailView: React.FC<Props> = ({
       return;
     }
     
-    // 左右キーでタブ切り替え（アイテム未選択時）
-    if (filteredItems.length === 0 || (key.leftArrow && autoSelectSlot)) {
+    // 左右キーでタブ切り替え
+    if (key.leftArrow || key.rightArrow) {
       const tabs: InventoryTab[] = ["recent", "weapon", "armor", "accessory", "all"];
       const currentIndex = tabs.indexOf(inventoryTab);
       if (key.leftArrow) {
@@ -142,7 +140,6 @@ export const EquipmentDetailView: React.FC<Props> = ({
         } else {
           setSelectedItemIndex(newIndex);
         }
-        setAutoSelectSlot(true);
       }
       if (key.downArrow) {
         const newIndex = selectedItemIndex + 1;
@@ -154,11 +151,6 @@ export const EquipmentDetailView: React.FC<Props> = ({
         } else {
           setSelectedItemIndex(newIndex);
         }
-        setAutoSelectSlot(true);
-      }
-      if (key.leftArrow || key.rightArrow) {
-        setAutoSelectSlot(false);
-        setSelectedSlotIndex((prev) => prev + (key.leftArrow ? -1 : 1));
       }
       
       // Space または Enter で装備
@@ -167,23 +159,22 @@ export const EquipmentDetailView: React.FC<Props> = ({
         const globalIndex = inventoryPage * ITEMS_PER_PAGE + selectedItemIndex;
         const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
         if (validSlots.length > 0) {
-          let targetSlot = validSlots[Math.abs(selectedSlotIndex) % validSlots.length];
-          if (autoSelectSlot) {
-            const itemType = item.baseItem.type;
-            if (itemType === "Weapon") {
-              targetSlot = "MainHand";
-            } else if (itemType === "Armor") {
-              if (item.baseItem.tags.includes("Helm")) targetSlot = "Helm";
-              else if (item.baseItem.tags.includes("Gloves")) targetSlot = "Gloves";
-              else if (item.baseItem.tags.includes("Boots")) targetSlot = "Boots";
-              else if (item.baseItem.tags.includes("Belt")) targetSlot = "Belt";
-              else targetSlot = "Armor";
-            } else if (itemType === "Accessory") {
-              if (item.baseItem.tags.includes("Ring")) {
-                targetSlot = session.player.equipment.has("Ring1") ? "Ring2" : "Ring1";
-              } else if (item.baseItem.tags.includes("Amulet")) {
-                targetSlot = "Amulet";
-              }
+          // 常に自動でスロットを選択
+          let targetSlot = validSlots[0];
+          const itemType = item.baseItem.type;
+          if (itemType === "Weapon") {
+            targetSlot = "MainHand";
+          } else if (itemType === "Armor") {
+            if (item.baseItem.tags.includes("Helm")) targetSlot = "Helm";
+            else if (item.baseItem.tags.includes("Gloves")) targetSlot = "Gloves";
+            else if (item.baseItem.tags.includes("Boots")) targetSlot = "Boots";
+            else if (item.baseItem.tags.includes("Belt")) targetSlot = "Belt";
+            else targetSlot = "Armor";
+          } else if (itemType === "Accessory") {
+            if (item.baseItem.tags.includes("Ring")) {
+              targetSlot = session.player.equipment.has("Ring1") ? "Ring2" : "Ring1";
+            } else if (item.baseItem.tags.includes("Amulet")) {
+              targetSlot = "Amulet";
             }
           }
           
@@ -197,8 +188,6 @@ export const EquipmentDetailView: React.FC<Props> = ({
             } else {
               setSelectedItemIndex(Math.min(selectedItemIndex, currentPageItems.length - 2));
             }
-            setSelectedSlotIndex(0);
-            setAutoSelectSlot(true);
           }
         }
       }
@@ -317,7 +306,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
                         ))}
                         {validSlots.length > 0 && (
                           <Text color="green">
-                            装備可能: {autoSelectSlot ? "自動選択" : validSlots[Math.abs(selectedSlotIndex) % validSlots.length]}
+                            装備可能
                           </Text>
                         )}
                         <Text color="yellow">売却価値: {formatGold(calculateItemValue(item))} G</Text>
@@ -364,9 +353,24 @@ export const EquipmentDetailView: React.FC<Props> = ({
               {(() => {
                 const item = currentPageItems[selectedItemIndex];
                 const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
-                const targetSlot = autoSelectSlot 
-                  ? validSlots[0]
-                  : validSlots[Math.abs(selectedSlotIndex) % validSlots.length];
+                // 常に自動でスロットを決定
+                let targetSlot = validSlots[0];
+                const itemType = item.baseItem.type;
+                if (itemType === "Weapon") {
+                  targetSlot = "MainHand";
+                } else if (itemType === "Armor") {
+                  if (item.baseItem.tags.includes("Helm")) targetSlot = "Helm";
+                  else if (item.baseItem.tags.includes("Gloves")) targetSlot = "Gloves";
+                  else if (item.baseItem.tags.includes("Boots")) targetSlot = "Boots";
+                  else if (item.baseItem.tags.includes("Belt")) targetSlot = "Belt";
+                  else targetSlot = "Armor";
+                } else if (itemType === "Accessory") {
+                  if (item.baseItem.tags.includes("Ring")) {
+                    targetSlot = session.player.equipment.has("Ring1") ? "Ring2" : "Ring1";
+                  } else if (item.baseItem.tags.includes("Amulet")) {
+                    targetSlot = "Amulet";
+                  }
+                }
                 const changes = calculateStatChanges(session.player, item, targetSlot);
                 
                 const formatChange = (stat: { current: number; new: number; diff: number }) => {
@@ -479,7 +483,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
       {/* 操作説明 */}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: アイテム | ←→: {filteredItems.length > 0 ? "スロット選択" : "タブ切替"} | Space: 装備 | Del: 売却 | Tab: 戦闘詳細へ
+          ↑↓: アイテム | ←→: タブ切替 | Space: 装備 | Del: 売却 | Tab: 戦闘詳細へ
         </Text>
       </Box>
     </Box>
