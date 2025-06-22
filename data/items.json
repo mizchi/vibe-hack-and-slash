@@ -7,7 +7,12 @@
       "tags": ["OneHanded"],
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 20 }
-      ]
+      ],
+      "weaponScaling": {
+        "strength": 0.8,
+        "dexterity": 0.2
+      },
+      "elementType": "Physical"
     },
     {
       "id": "sword_advanced",
@@ -17,7 +22,12 @@
       "requiredLevel": 5,
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 35 }
-      ]
+      ],
+      "weaponScaling": {
+        "strength": 0.8,
+        "dexterity": 0.2
+      },
+      "elementType": "Physical"
     },
     {
       "id": "axe_basic",
@@ -27,7 +37,12 @@
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 40 },
         { "type": "CriticalDamage", "multiplier": 0.4 }
-      ]
+      ],
+      "weaponScaling": {
+        "strength": 1.0,
+        "dexterity": 0.1
+      },
+      "elementType": "Physical"
     },
     {
       "id": "dagger_basic",
@@ -38,7 +53,12 @@
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 18 },
         { "type": "CriticalChance", "percentage": 0.2 }
-      ]
+      ],
+      "weaponScaling": {
+        "strength": 0.3,
+        "dexterity": 0.8
+      },
+      "elementType": "Physical"
     },
     {
       "id": "staff_basic",
@@ -50,7 +70,11 @@
         { "type": "IncreaseDamage", "value": 15 },
         { "type": "SkillPower", "percentage": 20 },
         { "type": "IncreaseMana", "value": 20 }
-      ]
+      ],
+      "weaponScaling": {
+        "intelligence": 1.0
+      },
+      "elementType": "Fire"
     },
     {
       "id": "shield_basic",

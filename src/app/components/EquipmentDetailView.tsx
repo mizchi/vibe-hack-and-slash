@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
-import type { Session, Item, EquipmentSlot, Gold } from "../../core/types.ts";
+import type { Session, Item, EquipmentSlot, Gold, Skill } from "../../core/types.ts";
 import { processAction } from "../../core/session.ts";
 import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
 import { calculateTotalStats } from "../../core/combat.ts";
 import { getValidSlotsForItem } from "../../core/equipment.ts";
 import { calculateStatChanges } from "../utils/stat-preview.ts";
 import { calculateItemValue, formatGold } from "../../core/item-value.ts";
+import { calculateSkillDamage, calculateTotalAttributes } from "../../core/damage.ts";
 
 type Props = {
   session: Session;
@@ -67,6 +68,11 @@ export const EquipmentDetailView: React.FC<Props> = ({
   );
 
   useInput((input, key) => {
+    // Tab キーは親コンポーネントで処理するのでスキップ
+    if (key.tab) {
+      return;
+    }
+    
     if (inventory.length > 0) {
       if (key.upArrow) {
         const newIndex = selectedItemIndex - 1;
@@ -238,7 +244,20 @@ export const EquipmentDetailView: React.FC<Props> = ({
           {/* 現在のステータス */}
           <Box borderStyle="single" padding={1} marginBottom={1}>
             <Text bold underline>ステータス</Text>
-            <Box marginTop={1}>
+            <Box marginTop={1} flexDirection="column">
+              {/* 基本ステータス */}
+              <Box marginBottom={1}>
+                {(() => {
+                  const attrs = calculateTotalAttributes(session.player);
+                  return (
+                    <>
+                      <Text>STR: {attrs.strength} | INT: {attrs.intelligence}</Text>
+                      <Text>DEX: {attrs.dexterity} | VIT: {attrs.vitality}</Text>
+                    </>
+                  );
+                })()}
+              </Box>
+              {/* 戦闘ステータス */}
               <Text color="green">⚔ 攻撃力: {playerStats.damage}</Text>
               <Text color="cyan">🛡 防御力: {playerStats.defense}</Text>
               <Text color="red">❤️  体力: {playerStats.maxHealth}</Text>
@@ -284,6 +303,44 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   </Box>
                 );
               })()}
+            </Box>
+          )}
+
+          {/* スキルダメージプレビュー */}
+          {session.player.skills.length > 0 && (
+            <Box borderStyle="single" padding={1} marginBottom={1}>
+              <Text bold underline>スキル予測ダメージ</Text>
+              <Box flexDirection="column" marginTop={1}>
+                {session.player.skills.slice(0, 3).map(skill => {
+                  const damageEffect = skill.effects.find(e => e.type === "Damage");
+                  if (!damageEffect || damageEffect.type !== "Damage") return null;
+                  
+                  const predictedDamage = calculateSkillDamage(
+                    session.player,
+                    damageEffect.baseDamage,
+                    damageEffect.scaling,
+                    damageEffect.element
+                  );
+                  
+                  const elementColors = {
+                    Physical: "white",
+                    Fire: "red",
+                    Ice: "cyan",
+                    Lightning: "yellow",
+                    Holy: "white",
+                    Dark: "magenta",
+                  };
+                  
+                  return (
+                    <Text key={skill.id}>
+                      <Text color={elementColors[damageEffect.element]}>
+                        {skill.name}: ~{predictedDamage}
+                      </Text>
+                      <Text dimColor> (MP: {skill.manaCost})</Text>
+                    </Text>
+                  );
+                })}
+              </Box>
             </Box>
           )}
 

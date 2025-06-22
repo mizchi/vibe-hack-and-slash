@@ -10,11 +10,27 @@ import type {
   BattleEvent,
   CharacterStats,
   Item,
+  ElementType,
 } from "./types.ts";
+import { calculateTotalAttributes, calculateAttackDamage } from "./damage.ts";
 
-// ステータス計算
+// ステータス計算（属性の影響を含む）
 export const calculateTotalStats = (player: Player): CharacterStats => {
   const base = { ...player.baseStats };
+  const totalAttributes = calculateTotalAttributes(player);
+  
+  // 属性によるステータス補正
+  // VIT: HP +5/point, DEF +0.5/point
+  base.maxHealth = (base.maxHealth + totalAttributes.vitality * 5) as Health;
+  base.defense = base.defense + Math.floor(totalAttributes.vitality * 0.5);
+  
+  // INT: MP +3/point, ManaRegen +0.2/point
+  base.maxMana = (base.maxMana + totalAttributes.intelligence * 3) as Mana;
+  base.manaRegen = base.manaRegen + Math.floor(totalAttributes.intelligence * 0.2);
+  
+  // DEX: CritChance +0.5%/point, CritDmg +1%/point
+  base.criticalChance = Math.min(0.75, base.criticalChance + totalAttributes.dexterity * 0.005);
+  base.criticalDamage = base.criticalDamage + totalAttributes.dexterity * 0.01;
   
   // Map から装備アイテムを取得
   player.equipment.forEach((item) => {
@@ -41,7 +57,7 @@ export const calculateTotalStats = (player: Player): CharacterStats => {
           base.lifeSteal += mod.percentage;
           break;
         case "CriticalChance":
-          base.criticalChance = Math.min(1, base.criticalChance + mod.percentage);
+          base.criticalChance = Math.min(0.75, base.criticalChance + mod.percentage);
           break;
         case "CriticalDamage":
           base.criticalDamage += mod.multiplier;
@@ -91,7 +107,12 @@ export const playerAttack = (
   random: () => number = Math.random
 ): Result<{ events: BattleEvent[]; updatedMonster: Monster }, GameError> => {
   const playerStats = calculateTotalStats(player);
-  const { damage, isCritical } = calculateDamage(playerStats, monster.stats, random);
+  
+  // クリティカル判定
+  const isCritical = random() < playerStats.criticalChance;
+  
+  // 新しいダメージ計算システムを使用
+  const { damage, element } = calculateAttackDamage(player, monster, isCritical);
   
   const newHealth = Math.max(0, monster.currentHealth - damage) as Health;
   const updatedMonster: Monster = {

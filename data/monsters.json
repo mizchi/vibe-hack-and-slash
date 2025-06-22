@@ -12,6 +12,14 @@
         "criticalDamage": 1.5,
         "lifeSteal": 0
       },
+      "elementResistance": {
+        "Physical": 0,
+        "Fire": -20,
+        "Ice": 0,
+        "Lightning": 0,
+        "Holy": -10,
+        "Dark": 10
+      },
       "lootTable": [
         {
           "baseItemId": "sword_basic",

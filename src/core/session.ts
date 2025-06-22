@@ -24,7 +24,7 @@ import type {
 } from "./types.ts";
 import { playerAttack, monsterAttack, applyExperience } from "./combat.ts";
 import { rollLoot } from "./loot.ts";
-import { getAvailableSkills, applySkillEffects, regenerateMana, tickCooldowns } from "./skills.ts";
+import { getAvailableSkills, applySkillEffects, regenerateMana, tickCooldowns, updateSkillTimers } from "./skills.ts";
 
 // クラス別の初期ステータス
 const CLASS_BASE_STATS = {
@@ -74,9 +74,48 @@ const CLASS_BASE_STATS = {
   },
 };
 
+// クラス別の初期属性
+const CLASS_BASE_ATTRIBUTES = {
+  Warrior: {
+    strength: 20 as Strength,
+    intelligence: 5 as Intelligence,
+    dexterity: 10 as Dexterity,
+    vitality: 15 as Vitality,
+  },
+  Mage: {
+    strength: 5 as Strength,
+    intelligence: 20 as Intelligence,
+    dexterity: 10 as Dexterity,
+    vitality: 8 as Vitality,
+  },
+  Rogue: {
+    strength: 10 as Strength,
+    intelligence: 10 as Intelligence,
+    dexterity: 20 as Dexterity,
+    vitality: 10 as Vitality,
+  },
+  Paladin: {
+    strength: 15 as Strength,
+    intelligence: 10 as Intelligence,
+    dexterity: 8 as Dexterity,
+    vitality: 12 as Vitality,
+  },
+};
+
+// 初期属性耐性
+const INITIAL_ELEMENT_RESISTANCE: ElementResistance = {
+  Physical: 0,
+  Fire: 0,
+  Ice: 0,
+  Lightning: 0,
+  Holy: 0,
+  Dark: 0,
+};
+
 // 初期プレイヤー作成
 export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Warrior"): Player => {
   const baseStats = CLASS_BASE_STATS[playerClass];
+  const baseAttributes = CLASS_BASE_ATTRIBUTES[playerClass];
   
   return {
     id,
@@ -86,9 +125,12 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
     currentHealth: baseStats.maxHealth,
     currentMana: baseStats.maxMana,
     baseStats,
+    baseAttributes,
     equipment: new Map(),
     skills: [],
     skillCooldowns: new Map(),
+    skillTimers: new Map(),
+    elementResistance: { ...INITIAL_ELEMENT_RESISTANCE },
     gold: 100 as Gold, // 初期ゴールド
   };
 };
@@ -124,6 +166,16 @@ export const spawnMonster = (
   const levelDiff = Math.floor(random() * 3) - 1;
   const monsterLevel = Math.max(1, playerLevel + levelDiff) as Level;
   
+  // デフォルトの属性耐性（テンプレートに定義がない場合）
+  const defaultResistance: ElementResistance = {
+    Physical: 0,
+    Fire: 0,
+    Ice: 0,
+    Lightning: 0,
+    Holy: 0,
+    Dark: 0,
+  };
+  
   return {
     id: `${template.id}_${Date.now()}` as MonsterId,
     name: template.name,
@@ -136,7 +188,11 @@ export const spawnMonster = (
       criticalChance: template.baseStats.criticalChance,
       criticalDamage: template.baseStats.criticalDamage,
       lifeSteal: template.baseStats.lifeSteal,
+      maxMana: 0 as Mana,
+      manaRegen: 0,
+      skillPower: 0,
     },
+    elementResistance: template.elementResistance || defaultResistance,
     lootTable: template.lootTable,
   };
 };
@@ -178,6 +234,9 @@ export const processBattleTurn = (
   
   // クールダウン減少
   currentPlayer = tickCooldowns(currentPlayer);
+  
+  // スキルタイマー更新
+  currentPlayer = updateSkillTimers(currentPlayer);
   
   // 利用可能なスキルをチェック
   const lastEvent = events[events.length - 1];

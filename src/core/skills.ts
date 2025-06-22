@@ -9,8 +9,10 @@ import type {
   Health,
   Mana,
   CharacterStats,
+  ElementType,
 } from "./types.ts";
 import { calculateTotalStats } from "./combat.ts";
+import { calculateSkillDamage } from "./damage.ts";
 
 // スキル発動条件チェック
 export const checkSkillTriggerConditions = (
@@ -74,6 +76,10 @@ export const getAvailableSkills = (
       const cooldown = player.skillCooldowns.get(skill.id) || 0;
       if (cooldown > 0) return false;
       
+      // 自動発動タイマーチェック
+      const timer = player.skillTimers.get(skill.id) || 0;
+      if (timer > 0) return false;
+      
       // 発動条件チェック
       return checkSkillTriggerConditions(skill.triggerConditions, {
         player,
@@ -83,6 +89,23 @@ export const getAvailableSkills = (
       });
     })
     .sort((a, b) => b.priority - a.priority); // 優先度順にソート
+};
+
+// スキルタイマーを更新
+export const updateSkillTimers = (player: Player): Player => {
+  const newTimers = new Map(player.skillTimers);
+  
+  // 各スキルのタイマーを減少
+  for (const [skillId, timer] of newTimers) {
+    if (timer > 0) {
+      newTimers.set(skillId, timer - 1);
+    }
+  }
+  
+  return {
+    ...player,
+    skillTimers: newTimers,
+  };
 };
 
 // スキル効果の適用
@@ -115,19 +138,26 @@ export const applySkillEffects = (
   currentPlayer.skillCooldowns = new Map(currentPlayer.skillCooldowns);
   currentPlayer.skillCooldowns.set(skill.id, skill.cooldown);
   
+  // 自動発動タイマー設定（スキルごとの固定間隔）
+  currentPlayer.skillTimers = new Map(currentPlayer.skillTimers);
+  const autoInterval = Math.max(2, skill.cooldown + 1); // クールダウン+1ターン
+  currentPlayer.skillTimers.set(skill.id, autoInterval);
+  
   // 効果適用
   skill.effects.forEach(effect => {
     switch (effect.type) {
       case "Damage":
         if (currentMonster && skill.targetType === "Enemy") {
-          const damage = Math.floor(
-            effect.baseDamage + (playerStats.skillPower * effect.scaling)
-          ) as Damage;
+          // 新しいダメージ計算システムを使用
+          const damage = calculateSkillDamage(
+            currentPlayer,
+            effect.baseDamage,
+            effect.scaling,
+            effect.element,
+            currentMonster
+          );
           
-          const actualDamage = Math.max(
-            1,
-            Math.floor(damage * (100 / (100 + currentMonster.stats.defense)))
-          ) as Damage;
+          const actualDamage = Math.max(1, damage) as Damage;
           
           currentMonster.currentHealth = Math.max(
             0,

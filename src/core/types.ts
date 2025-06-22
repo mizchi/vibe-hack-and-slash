@@ -29,6 +29,26 @@ export type Mana = Brand<number, "Mana">;
 export type SkillId = Brand<string, "SkillId">;
 export type Gold = Brand<number, "Gold">;
 
+// 基本ステータス
+export type Strength = Brand<number, "Strength">;  // STR: 物理ダメージ
+export type Intelligence = Brand<number, "Intelligence">;  // INT: 魔法ダメージ、MP
+export type Dexterity = Brand<number, "Dexterity">;  // DEX: クリティカル率、命中率
+export type Vitality = Brand<number, "Vitality">;  // VIT: HP、防御力
+
+// 属性タイプ
+export type ElementType = 
+  | "Physical"  // 物理
+  | "Fire"      // 火
+  | "Ice"       // 氷  
+  | "Lightning" // 雷
+  | "Holy"      // 聖
+  | "Dark";     // 闇
+
+// 属性耐性
+export type ElementResistance = {
+  [key in ElementType]: number; // 0-100% (負の値は弱点)
+};
+
 // プレイヤータイプ
 export type PlayerClass = "Warrior" | "Mage" | "Rogue" | "Paladin";
 
@@ -94,9 +114,22 @@ export type ItemModifier =
   | { type: "CriticalDamage"; multiplier: number }
   | { type: "IncreaseMana"; value: number }
   | { type: "ManaRegen"; value: number }
-  | { type: "SkillPower"; percentage: number };
+  | { type: "SkillPower"; percentage: number }
+  | { type: "IncreaseStrength"; value: number }
+  | { type: "IncreaseIntelligence"; value: number }
+  | { type: "IncreaseDexterity"; value: number }
+  | { type: "IncreaseVitality"; value: number }
+  | { type: "ElementResistance"; element: ElementType; value: number }
+  | { type: "ElementDamage"; element: ElementType; percentage: number };
 
 export type ItemType = "Weapon" | "Armor" | "Accessory";
+
+// 武器のスケーリング
+export type WeaponScaling = {
+  strength?: number;      // STRによるダメージ倍率
+  intelligence?: number;  // INTによるダメージ倍率
+  dexterity?: number;    // DEXによるダメージ倍率
+};
 
 export type BaseItem = {
   id: ItemId;
@@ -106,6 +139,8 @@ export type BaseItem = {
   baseModifiers: ItemModifier[];
   requiredLevel?: Level; // 装備レベル制限
   requiredClass?: PlayerClass[]; // 装備可能なクラス
+  weaponScaling?: WeaponScaling; // 武器の場合のスケーリング
+  elementType?: ElementType; // 武器の属性
 };
 
 export type Item = {
@@ -130,6 +165,14 @@ export type CharacterStats = {
   skillPower: number;
 };
 
+// 基本ステータス
+export type BaseStats = {
+  strength: Strength;
+  intelligence: Intelligence;
+  dexterity: Dexterity;
+  vitality: Vitality;
+};
+
 export type Player = {
   id: PlayerId;
   class: PlayerClass;
@@ -138,9 +181,12 @@ export type Player = {
   currentHealth: Health;
   currentMana: Mana;
   baseStats: CharacterStats;
+  baseAttributes: BaseStats; // STR/INT/DEX/VIT
   equipment: Map<EquipmentSlot, Item>; // スロットごとの装備
   skills: Skill[];
   skillCooldowns: Map<SkillId, number>; // 残りクールダウンターン
+  skillTimers: Map<SkillId, number>; // スキル自動発動タイマー
+  elementResistance: ElementResistance; // 属性耐性
   gold: Gold;
 };
 
@@ -151,6 +197,7 @@ export type Monster = {
   level: Level;
   currentHealth: Health;
   stats: CharacterStats;
+  elementResistance: ElementResistance; // 属性耐性
   lootTable: LootEntry[];
 };
 
@@ -182,12 +229,12 @@ export type SkillType = "Active" | "Passive";
 export type SkillTargetType = "Self" | "Enemy" | "All";
 
 export type SkillEffect =
-  | { type: "Damage"; baseDamage: Damage; scaling: number } // scaling = skillPowerの倍率
+  | { type: "Damage"; baseDamage: Damage; scaling: number; element: ElementType } // scaling = skillPowerの倍率
   | { type: "Heal"; baseHeal: Health; scaling: number }
   | { type: "Buff"; stat: keyof CharacterStats; value: number; duration: number }
   | { type: "Debuff"; stat: string; value: number; duration: number }
   | { type: "Stun"; duration: number }
-  | { type: "DamageOverTime"; damage: Damage; duration: number }
+  | { type: "DamageOverTime"; damage: Damage; duration: number; element: ElementType }
   | { type: "LifeDrain"; percentage: number };
 
 export type SkillTriggerCondition =

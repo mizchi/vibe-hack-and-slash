@@ -12,7 +12,8 @@
         {
           "type": "Damage",
           "baseDamage": 15,
-          "scaling": 0.8
+          "scaling": 0.8,
+          "element": "Fire"
         }
       ],
       "triggerConditions": [
