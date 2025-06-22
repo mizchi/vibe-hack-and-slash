@@ -80,6 +80,11 @@ export const getAvailableSkills = (
       const timer = player.skillTimers.get(skill.id) || 0;
       if (timer > 0) return false;
       
+      // 職業制限チェック
+      if (skill.requiredClass && skill.requiredClass.length > 0) {
+        if (!skill.requiredClass.includes(player.class)) return false;
+      }
+      
       // 武器タグチェック
       if (skill.requiredWeaponTags && skill.requiredWeaponTags.length > 0) {
         // MainHandの武器を取得

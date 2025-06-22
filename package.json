@@ -15,7 +15,9 @@
     "format": "biome format --write .",
     "lint": "oxlint",
     "check": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:schema": "tsx scripts/check-schema.ts",
+    "generate:schemas": "tsx scripts/generate-schemas.ts"
   },
   "keywords": [
     "cli",
@@ -27,7 +29,9 @@
   "license": "MIT",
   "dependencies": {
     "ink": "^5.0.1",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.5"
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "^0.0.4",

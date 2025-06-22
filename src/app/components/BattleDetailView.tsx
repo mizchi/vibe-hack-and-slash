@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import type { Session, BattleEvent } from "../../core/types.ts";
-import { getItemDisplayName } from "../../core/loot.ts";
+import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
 import { calculateTotalStats } from "../../core/combat.ts";
-import { formatGold } from "../../core/item-value.ts";
+import { formatGold, calculateItemValue } from "../../core/item-value.ts";
+import { calculateTotalAttributes } from "../../core/damage.ts";
+import { useSelection } from "../hooks/useSelection.ts";
+import { Pagination } from "./Pagination.tsx";
 
 type Props = {
   session: Session;
@@ -34,50 +37,27 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
 
 type LogFilter = "all" | "damage" | "heal" | "loot" | "skill" | "system";
 
-const BattleLogFull: React.FC<{ events: BattleEvent[]; filter: LogFilter }> = ({ events, filter }) => {
-  // フィルタリング
-  const filteredEvents = events.filter(event => {
-    switch (filter) {
-      case "all":
-        return true;
-      case "damage":
-        return event.type === "PlayerAttack" || event.type === "MonsterAttack" || event.type === "SkillDamage";
-      case "heal":
-        return event.type === "PlayerHeal" || event.type === "SkillHeal" || event.type === "ManaRegenerated";
-      case "loot":
-        return event.type === "ItemDropped" || event.type === "GoldDropped";
-      case "skill":
-        return event.type === "SkillUsed" || event.type === "SkillDamage" || event.type === "SkillHeal" || event.type === "NotEnoughMana";
-      case "system":
-        return event.type === "MonsterDefeated" || event.type === "PlayerLevelUp" || event.type === "PlayerDefeated";
-      default:
-        return true;
-    }
-  });
+const BattleLogWithSelection: React.FC<{ 
+  eventsWithId: Array<{ event: BattleEvent; id: string }>; 
+  selectedId: string | null;
+  showSelection: boolean;
+}> = ({ eventsWithId, selectedId, showSelection }) => {
   
-  // 最新を上に表示
-  const displayEvents = [...filteredEvents.slice(-15)].reverse();
-  
-  const formatEvent = (event: BattleEvent, showDetails: boolean = false): { text: string; color?: string; detail?: string } => {
+  const formatEvent = (event: BattleEvent): { text: string; color?: string } => {
     switch (event.type) {
       case "PlayerAttack":
         if (event.damage === 0) return { text: "" }; // 空行用
         const attackText = event.isCritical
           ? `[攻撃] クリティカルヒット！ ${event.damage}ダメージを与えた！`
           : `[攻撃] ${event.damage}ダメージを与えた`;
-        const attackDetail = showDetails && event.damage > 0
-          ? `   (基礎攻撃力 × ${event.isCritical ? 'クリティカル倍率' : '1.0'} - 敵防御力)`
-          : undefined;
         return {
           text: attackText,
-          color: event.isCritical ? "yellow" : undefined,
-          detail: attackDetail,
+          color: event.isCritical ? "yellow" : "cyan",
         };
       case "MonsterAttack":
         return { 
           text: `[被弾] ${event.damage}ダメージを受けた`, 
           color: "red",
-          detail: showDetails ? `   (敵攻撃力 - プレイヤー防御力)` : undefined,
         };
       case "PlayerHeal":
         return { text: `[回復] ${event.amount}HP回復した`, color: "green" };
@@ -88,7 +68,6 @@ const BattleLogFull: React.FC<{ events: BattleEvent[]; filter: LogFilter }> = ({
         return { 
           text: `[入手] ${itemName}を入手！`, 
           color: "cyan",
-          detail: showDetails ? `   ${event.item.rarity} ${event.item.baseItem.type}` : undefined,
         };
       case "PlayerLevelUp":
         return { text: `[LvUP] レベルアップ！ Lv.${event.newLevel}になった！`, color: "magenta" };
@@ -100,7 +79,6 @@ const BattleLogFull: React.FC<{ events: BattleEvent[]; filter: LogFilter }> = ({
         return { 
           text: `[スキル] ${event.skillName}で${event.damage}ダメージ！`, 
           color: "magenta",
-          detail: showDetails ? `   (基礎ダメージ + スケーリング × 属性係数)` : undefined,
         };
       case "SkillHeal":
         return { text: `[スキル] ${event.skillName}で${event.amount}回復！`, color: "green" };
@@ -110,48 +88,298 @@ const BattleLogFull: React.FC<{ events: BattleEvent[]; filter: LogFilter }> = ({
         return { text: `[MP不足] マナ不足！ ${event.skillName}には${event.required}MP必要`, color: "gray" };
       case "GoldDropped":
         return { text: `[Gold] ${formatGold(event.amount)}ゴールド獲得！`, color: "yellow" };
+      case "WaveStart":
+        return { text: `[Wave ${event.wave}] ${event.monsterCount}体の敵が出現！`, color: "magenta" };
+      case "WaveCleared":
+        return { text: `[Wave ${event.wave}] クリア！`, color: "yellow" };
       default:
         return { text: "" };
     }
   };
 
-  // ダメージ系のログには詳細を表示
-  const showDetails = filter === "damage" || filter === "skill";
-  
   return (
     <Box flexDirection="column">
-      {displayEvents.map((event, i) => {
-        const { text, color, detail } = formatEvent(event, showDetails);
+      {eventsWithId.map(({ event, id }, i) => {
+        const { text, color } = formatEvent(event);
         // 空のイベントはスキップ
         if (!text) return null;
         
-        // 詳細表示の有無に関わらず、固定の高さを確保
-        if (showDetails && event.type !== "PlayerAttack" && detail) {
-          return (
-            <Box key={i} flexDirection="column" height={2}>
-              <Text color={color} dimColor={i > 9}>
-                {text}
-              </Text>
-              <Text dimColor>{detail}</Text>
-            </Box>
-          );
-        } else {
-          return (
-            <Box key={i} height={1}>
-              <Text color={color} dimColor={i > 9}>
-                {text}
-              </Text>
-            </Box>
-          );
-        }
+        const isSelected = showSelection && id === selectedId;
+        
+        return (
+          <Box key={id} height={1}>
+            <Text color={isSelected ? "yellow" : undefined} bold={isSelected}>
+              {isSelected ? "▶ " : "  "}
+            </Text>
+            <Text color={color} dimColor={!isSelected && i > 9}>
+              {text}
+            </Text>
+          </Box>
+        );
       })}
     </Box>
   );
 };
 
+// ログ詳細表示コンポーネント
+const LogDetailView: React.FC<{
+  event: BattleEvent;
+  session: Session;
+  battleLog: BattleEvent[];
+}> = ({ event, session, battleLog }) => {
+  const playerStats = calculateTotalStats(session.player);
+  const totalAttributes = calculateTotalAttributes(session.player);
+  
+  switch (event.type) {
+    case "PlayerAttack":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>攻撃詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="cyan">基礎ダメージ: {event.damage}</Text>
+            {event.isCritical && <Text color="yellow">クリティカルヒット！</Text>}
+            
+            <Box marginTop={1}>
+              <Text bold>ダメージ計算:</Text>
+              <Text dimColor>武器ダメージ: {playerStats.damage}</Text>
+              {event.isCritical && (
+                <Text dimColor>クリティカル倍率: x{playerStats.criticalDamage.toFixed(1)}</Text>
+              )}
+              <Text dimColor>対象: {event.targetName}</Text>
+            </Box>
+            
+            <Box marginTop={1}>
+              <Text bold>プレイヤーステータス:</Text>
+              <Text dimColor>STR: {totalAttributes.strength} | DEX: {totalAttributes.dexterity}</Text>
+              <Text dimColor>クリティカル率: {(playerStats.criticalChance * 100).toFixed(0)}%</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "MonsterAttack":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>被ダメージ詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="red">受けたダメージ: {event.damage}</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>ダメージ計算:</Text>
+              <Text dimColor>攻撃者: {event.attackerName}</Text>
+              <Text dimColor>プレイヤー防御力: {playerStats.defense}</Text>
+              <Text dimColor>ダメージ軽減: {Math.round((playerStats.defense / (playerStats.defense + 100)) * 100)}%</Text>
+            </Box>
+            
+            <Box marginTop={1}>
+              <Text bold>現在のHP:</Text>
+              <Text color={session.player.currentHealth < playerStats.maxHealth * 0.3 ? "red" : "green"}>
+                {session.player.currentHealth}/{playerStats.maxHealth}
+              </Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "ItemDropped":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>アイテム詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="cyan" bold>{getItemDisplayName(event.item)}</Text>
+            <Text>{event.item.rarity} {event.item.baseItem.type}</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>効果:</Text>
+              {getItemStats(event.item).map((stat, i) => (
+                <Text key={i} dimColor>{stat}</Text>
+              ))}
+            </Box>
+            
+            <Box marginTop={1}>
+              <Text bold>売却価値:</Text>
+              <Text color="yellow">{formatGold(calculateItemValue(event.item))} G</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "SkillUsed":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>スキル使用詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="blue">{event.skillName}</Text>
+            <Text>消費MP: {event.manaCost}</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>現在のMP:</Text>
+              <Text color="blue">{session.player.currentMana}/{playerStats.maxMana}</Text>
+              <Text dimColor>MP回復: {playerStats.manaRegen}/ターン</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "SkillDamage":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>スキルダメージ詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="magenta">{event.skillName}: {event.damage}ダメージ</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>ダメージ計算:</Text>
+              <Text dimColor>武器スケーリング適用</Text>
+              <Text dimColor>INT: {totalAttributes.intelligence}</Text>
+              <Text dimColor>スキルパワー: +{playerStats.skillPower}%</Text>
+            </Box>
+            
+            <Box marginTop={1}>
+              <Text bold>対象: {event.targetName}</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "MonsterDefeated":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>撃破詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="yellow">獲得経験値: {event.experience}EXP</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>レベル進捗:</Text>
+              <Text dimColor>現在レベル: {session.player.level}</Text>
+              <Text dimColor>現在経験値: {session.player.experience}EXP</Text>
+              <Text dimColor>次のレベルまで: 計算中...</Text>
+            </Box>
+            
+            <Box marginTop={1}>
+              <Text bold>撃破数:</Text>
+              <Text>{session.defeatedCount}体</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "PlayerLevelUp":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>レベルアップ詳細</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="magenta">レベル {event.newLevel} 到達！</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>ステータス上昇:</Text>
+              <Text dimColor>各属性値: +2</Text>
+              <Text dimColor>STR: {totalAttributes.strength}</Text>
+              <Text dimColor>INT: {totalAttributes.intelligence}</Text>
+              <Text dimColor>DEX: {totalAttributes.dexterity}</Text>
+              <Text dimColor>VIT: {totalAttributes.vitality}</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "WaveStart":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>Wave開始</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="magenta">Wave {event.wave}</Text>
+            <Text>出現モンスター数: {event.monsterCount}体</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>現在の敵:</Text>
+              {session.currentMonster ? (
+                <Text dimColor>
+                  {session.currentMonster.name} Lv.{session.currentMonster.level}
+                </Text>
+              ) : (
+                <Text dimColor>敵がいません</Text>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    case "WaveCleared":
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>Wave完了</Text>
+          <Box marginTop={1} flexDirection="column">
+            <Text color="yellow">Wave {event.wave} クリア！</Text>
+            
+            <Box marginTop={1}>
+              <Text bold>戦績:</Text>
+              <Text dimColor>撃破数: {session.defeatedCount}体</Text>
+            </Box>
+          </Box>
+        </Box>
+      );
+      
+    default:
+      return (
+        <Box flexDirection="column">
+          <Text bold underline>イベント詳細</Text>
+          <Box marginTop={1}>
+            <Text dimColor>詳細情報なし</Text>
+          </Box>
+        </Box>
+      );
+  }
+};
+
+// イベントにIDを付与する関数
+const getEventId = (event: BattleEvent, index: number): string => {
+  // イベントタイプとインデックスを組み合わせてユニークなIDを生成
+  return `${event.type}-${index}`;
+};
+
 export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused }) => {
   const playerStats = calculateTotalStats(session.player);
   const [logFilter, setLogFilter] = useState<LogFilter>("all");
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+  
+  // フィルタリングされたイベント（IDを付与）
+  const filteredEventsWithId = battleLog
+    .map((event, index) => ({ event, id: getEventId(event, index) }))
+    .filter(({ event }) => {
+      switch (logFilter) {
+        case "all":
+          return true;
+        case "damage":
+          return event.type === "PlayerAttack" || event.type === "MonsterAttack" || event.type === "SkillDamage";
+        case "heal":
+          return event.type === "PlayerHeal" || event.type === "SkillHeal" || event.type === "ManaRegenerated";
+        case "loot":
+          return event.type === "ItemDropped" || event.type === "GoldDropped";
+        case "skill":
+          return event.type === "SkillUsed" || event.type === "SkillDamage" || event.type === "SkillHeal" || event.type === "NotEnoughMana";
+        case "system":
+          return event.type === "MonsterDefeated" || event.type === "PlayerLevelUp" || event.type === "PlayerDefeated" || event.type === "WaveStart" || event.type === "WaveCleared";
+        default:
+          return true;
+      }
+    });
+  
+  // 最新15件を逆順で表示
+  const displayEventsWithId = [...filteredEventsWithId.slice(-15)].reverse();
+  
+  // useSelection フックを使用
+  const {
+    selectedId,
+    selectedIndex,
+    moveUp,
+    moveDown,
+    getSelectedItem,
+  } = useSelection({
+    items: displayEventsWithId,
+    itemsPerPage: 15, // 全て1ページに表示
+    getId: (item) => item.id,
+  });
   
   useInput((input, key) => {
     // Tab キーは親コンポーネントで処理するのでスキップ
@@ -159,8 +387,8 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
       return;
     }
     
-    // 左右キーでログフィルター切り替え
-    if (key.leftArrow || key.rightArrow) {
+    // 左右キーでログフィルター切り替え（詳細表示中は無効）
+    if (!showDetail && (key.leftArrow || key.rightArrow)) {
       const filters: LogFilter[] = ["all", "damage", "heal", "loot", "skill", "system"];
       const currentIndex = filters.indexOf(logFilter);
       if (key.leftArrow) {
@@ -170,6 +398,25 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
         const newIndex = currentIndex < filters.length - 1 ? currentIndex + 1 : 0;
         setLogFilter(filters[newIndex]);
       }
+    }
+    
+    // 上下キーでログ選択
+    if (displayEventsWithId.length > 0) {
+      if (key.upArrow) {
+        moveUp();
+      } else if (key.downArrow) {
+        moveDown();
+      }
+    }
+    
+    // Enterで詳細表示切り替え
+    if (key.return && displayEventsWithId.length > 0) {
+      setShowDetail(!showDetail);
+    }
+    
+    // Escapeで詳細表示を閉じる
+    if (key.escape && showDetail) {
+      setShowDetail(false);
     }
   });
 
@@ -202,27 +449,27 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
             />
             <Box marginTop={1} flexDirection="column">
               <Text>攻撃力: {playerStats.damage} 防御力: {playerStats.defense}</Text>
-              <Text>クリティカル: {(playerStats.criticalChance * 100).toFixed(0)}% / {(playerStats.criticalDamage * 100).toFixed(0)}%</Text>
             </Box>
           </Box>
         </Box>
 
         {/* 敵情報 */}
         <Box width="50%" borderStyle="single" padding={1}>
-          <Text bold color="red">敵情報</Text>
+          <Text bold color="red">敵情報 (Wave {session.wave})</Text>
           {session.currentMonster ? (
-            <Box flexDirection="column">
-              <Text>{session.currentMonster.name} Lv.{session.currentMonster.level}</Text>
+            <Box flexDirection="column" marginTop={1}>
+              <Text color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}>
+                {session.currentMonster.name} Lv.{session.currentMonster.level}
+              </Text>
               <HealthBar
                 current={session.currentMonster.currentHealth}
                 max={session.currentMonster.stats.maxHealth}
                 label="HP"
-                color="red"
-                width={25}
+                color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}
+                width={20}
               />
               <Box marginTop={1}>
-                <Text dimColor>攻撃力: {session.currentMonster.stats.damage}</Text>
-                <Text dimColor>防御力: {session.currentMonster.stats.defense}</Text>
+                <Text dimColor>撃破数: {session.defeatedCount}体</Text>
               </Box>
             </Box>
           ) : (
@@ -231,49 +478,102 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
         </Box>
       </Box>
 
-      {/* 戦闘ログ（フル表示） */}
-      <Box borderStyle="single" padding={1} flexGrow={1}>
-        <Box flexDirection="column" height="100%">
-          <Box>
-            <Text bold underline>戦闘ログ (最新15件)</Text>
-          </Box>
-          
-          {/* フィルタータブ */}
-          <Box marginTop={1}>
-            {(() => {
-              const tabs = [
-                { key: "all", label: "全て" },
-                { key: "damage", label: "ダメージ" },
-                { key: "heal", label: "回復" },
-                { key: "loot", label: "アイテム" },
-                { key: "skill", label: "スキル" },
-                { key: "system", label: "システム" },
-              ];
+      {/* スキルクールダウンタイマー */}
+      {session.player.skills.length > 0 && (
+        <Box borderStyle="single" padding={1} marginBottom={1}>
+          <Text bold underline>スキル状態</Text>
+          <Box flexDirection="row" marginTop={1} flexWrap="wrap">
+            {session.player.skills.slice(0, 6).map((skill) => {
+              const cooldown = session.player.skillCooldowns.get(skill.id) || 0;
+              const timer = session.player.skillTimers.get(skill.id) || 0;
+              const isReady = cooldown === 0 && timer === 0;
               
-              return tabs.map((tab, index) => (
-                <React.Fragment key={tab.key}>
-                  <Text
-                    color={logFilter === tab.key ? "cyan" : "gray"}
-                    bold={logFilter === tab.key}
-                  >
-                    {tab.label}
+              return (
+                <Box key={skill.id} marginRight={2} marginBottom={1}>
+                  <Text color={isReady ? "green" : "gray"}>
+                    {skill.name.substring(0, 8)}:
                   </Text>
-                  {index < tabs.length - 1 && <Text> | </Text>}
-                </React.Fragment>
-              ));
-            })()}
-          </Box>
-          
-          <Box marginTop={1} flexGrow={1} overflow="hidden">
-            <BattleLogFull events={battleLog} filter={logFilter} />
+                  <Text color={isReady ? "green" : "red"}>
+                    {isReady ? " Ready" : ` CD:${cooldown > 0 ? cooldown : timer}`}
+                  </Text>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
+      )}
+
+      {/* 戦闘ログとログ詳細表示 */}
+      <Box flexDirection="row" flexGrow={1}>
+        {/* 左側：戦闘ログ */}
+        <Box 
+          borderStyle="single" 
+          padding={1} 
+          width={showDetail ? "50%" : "100%"}
+          marginRight={showDetail ? 1 : 0}
+        >
+          <Box flexDirection="column" height="100%">
+            <Box>
+              <Text bold underline>戦闘ログ (最新15件)</Text>
+              {showDetail && <Text dimColor> [Esc: 閉じる]</Text>}
+            </Box>
+            
+            {/* フィルタータブ */}
+            <Box marginTop={1}>
+              {(() => {
+                const tabs = [
+                  { key: "all", label: "全て" },
+                  { key: "damage", label: "ダメージ" },
+                  { key: "heal", label: "回復" },
+                  { key: "loot", label: "アイテム" },
+                  { key: "skill", label: "スキル" },
+                  { key: "system", label: "システム" },
+                ];
+                
+                return tabs.map((tab, index) => (
+                  <React.Fragment key={tab.key}>
+                    <Text
+                      color={logFilter === tab.key ? "cyan" : "gray"}
+                      bold={logFilter === tab.key}
+                      dimColor={showDetail}
+                    >
+                      {tab.label}
+                    </Text>
+                    {index < tabs.length - 1 && <Text dimColor={showDetail}> | </Text>}
+                  </React.Fragment>
+                ));
+              })()}
+            </Box>
+            
+            <Box marginTop={1} flexGrow={1} overflow="hidden">
+              <BattleLogWithSelection 
+                eventsWithId={displayEventsWithId} 
+                selectedId={selectedId}
+                showSelection={true}
+              />
+            </Box>
+          </Box>
+        </Box>
+        
+        {/* 右側：ログ詳細 */}
+        {showDetail && getSelectedItem() && (
+          <Box borderStyle="round" padding={1} width="50%">
+            <LogDetailView 
+              event={getSelectedItem()!.event} 
+              session={session}
+              battleLog={battleLog}
+            />
+          </Box>
+        )}
       </Box>
 
       {/* 操作説明 */}
       <Box marginTop={1} height={1}>
         <Text dimColor>
-          ←→: ログフィルター | P: 一時停止 | R: 休憩（全回復） | Ctrl+C: 終了
+          {showDetail 
+            ? "↑↓: ログ選択 | Esc: 詳細を閉じる | P: 一時停止 | R: 休憩"
+            : "↑↓: ログ選択 | ←→: フィルター | Enter: 詳細 | P: 一時停止 | R: 休憩"
+          }
         </Text>
       </Box>
     </Box>

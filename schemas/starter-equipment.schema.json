@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/hacknslash/starter-equipment.schema.json",
+  "title": "Starter Equipment Schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "Warrior": {
+      "$ref": "#/definitions/starterEquipmentList"
+    },
+    "Mage": {
+      "$ref": "#/definitions/starterEquipmentList"
+    },
+    "Rogue": {
+      "$ref": "#/definitions/starterEquipmentList"
+    },
+    "Paladin": {
+      "$ref": "#/definitions/starterEquipmentList"
+    }
+  },
+  "definitions": {
+    "starterEquipmentList": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["baseItemId", "slot"],
+        "properties": {
+          "baseItemId": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "string",
+            "enum": ["MainHand", "OffHand", "Armor", "Helm", "Gloves", 
+                     "Boots", "Ring1", "Ring2", "Amulet", "Belt"]
+          }
+        }
+      }
+    }
+  }
+}

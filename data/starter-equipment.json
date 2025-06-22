@@ -1,0 +1,59 @@
+{
+  "$schema": "../schemas/starter-equipment.schema.json",
+  "Warrior": [
+    {
+      "baseItemId": "sword_basic",
+      "slot": "MainHand"
+    },
+    {
+      "baseItemId": "shield_basic",
+      "slot": "OffHand"
+    },
+    {
+      "baseItemId": "chainmail",
+      "slot": "Armor"
+    }
+  ],
+  "Mage": [
+    {
+      "baseItemId": "staff_basic",
+      "slot": "MainHand"
+    },
+    {
+      "baseItemId": "robe",
+      "slot": "Armor"
+    },
+    {
+      "baseItemId": "amulet_basic",
+      "slot": "Amulet"
+    }
+  ],
+  "Rogue": [
+    {
+      "baseItemId": "dagger",
+      "slot": "MainHand"
+    },
+    {
+      "baseItemId": "leather_armor",
+      "slot": "Armor"
+    },
+    {
+      "baseItemId": "boots_basic",
+      "slot": "Boots"
+    }
+  ],
+  "Paladin": [
+    {
+      "baseItemId": "mace_basic",
+      "slot": "MainHand"
+    },
+    {
+      "baseItemId": "shield_basic",
+      "slot": "OffHand"
+    },
+    {
+      "baseItemId": "chainmail",
+      "slot": "Armor"
+    }
+  ]
+}

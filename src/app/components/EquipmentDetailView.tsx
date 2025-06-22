@@ -154,8 +154,8 @@ export const EquipmentDetailView: React.FC<Props> = ({
         }
       }
       
-      // Space または Enter で装備
-      if ((input === " " || key.return) && currentPageItems[selectedItemIndex]) {
+      // Enter で装備
+      if (key.return && currentPageItems[selectedItemIndex]) {
         const item = currentPageItems[selectedItemIndex];
         const globalIndex = inventoryPage * ITEMS_PER_PAGE + selectedItemIndex;
         const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
@@ -512,7 +512,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
       {/* 操作説明 */}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: アイテム | ←→: タブ切替 | Space: 装備 | Del: 売却
+          ↑↓: アイテム | ←→: タブ切替 | Enter: 装備 | Del: 売却
         </Text>
       </Box>
     </Box>

@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/hacknslash/monsters.schema.json",
+  "title": "Monsters Schema",
+  "type": "object",
+  "required": ["monsters"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "monsters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/monsterTemplate"
+      }
+    }
+  },
+  "definitions": {
+    "monsterTemplate": {
+      "type": "object",
+      "required": ["id", "name", "levelRange", "baseStats", "lootTable"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z_]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "levelRange": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "baseStats": {
+          "type": "object",
+          "required": ["health", "damage", "defense", "criticalChance", 
+                       "criticalDamage", "lifeSteal"],
+          "properties": {
+            "health": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "damage": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "defense": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "criticalChance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "criticalDamage": {
+              "type": "number",
+              "minimum": 1
+            },
+            "lifeSteal": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "elementResistance": {
+          "type": "object",
+          "properties": {
+            "Physical": { "type": "integer" },
+            "Fire": { "type": "integer" },
+            "Ice": { "type": "integer" },
+            "Lightning": { "type": "integer" },
+            "Holy": { "type": "integer" },
+            "Dark": { "type": "integer" }
+          }
+        },
+        "lootTable": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/lootEntry"
+          }
+        }
+      }
+    },
+    "lootEntry": {
+      "type": "object",
+      "required": ["baseItemId", "dropChance", "rarityWeights"],
+      "properties": {
+        "baseItemId": {
+          "type": "string"
+        },
+        "dropChance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rarityWeights": {
+          "type": "object",
+          "required": ["common", "magic", "rare", "legendary"],
+          "properties": {
+            "common": {
+              "type": "number",
+              "minimum": 0
+            },
+            "magic": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rare": {
+              "type": "number",
+              "minimum": 0
+            },
+            "legendary": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}

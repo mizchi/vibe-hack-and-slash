@@ -223,8 +223,9 @@ export type SessionState = "InProgress" | "Paused" | "Completed";
 export type Session = {
   id: SessionId;
   player: Player;
-  currentMonster?: Monster;
+  currentMonster?: Monster; // 現在の敵（オプショナル）
   defeatedCount: number;
+  wave: number; // ウェーブ番号
   state: SessionState;
   startedAt: Date;
 };
@@ -263,23 +264,27 @@ export type Skill = {
   triggerConditions: SkillTriggerCondition[]; // 全て満たす必要がある
   priority: number; // 高いほど優先
   requiredWeaponTags?: ItemTag[]; // 必要な武器タグ（いずれか1つ満たせばOK）
+  requiredClass?: PlayerClass[]; // 必要な職業（いずれか1つ満たせばOK）
+  guaranteedCritical?: boolean; // 確実にクリティカルになるか
 };
 
 // バトルイベント
 export type BattleEvent =
-  | { type: "PlayerAttack"; damage: Damage; isCritical: boolean }
-  | { type: "MonsterAttack"; damage: Damage }
+  | { type: "PlayerAttack"; damage: Damage; isCritical: boolean; targetId: MonsterId; targetName: string }
+  | { type: "MonsterAttack"; damage: Damage; attackerId: MonsterId; attackerName: string }
   | { type: "PlayerHeal"; amount: Health }
-  | { type: "MonsterDefeated"; monsterId: MonsterId; experience: Experience }
+  | { type: "MonsterDefeated"; monsterId: MonsterId; monsterName: string; experience: Experience }
   | { type: "ItemDropped"; item: Item }
   | { type: "PlayerLevelUp"; newLevel: Level }
   | { type: "PlayerDefeated" }
   | { type: "SkillUsed"; skillId: SkillId; skillName: string; manaCost: Mana }
-  | { type: "SkillDamage"; skillName: string; damage: Damage; targetId?: MonsterId }
+  | { type: "SkillDamage"; skillName: string; damage: Damage; targetId: MonsterId; targetName: string }
   | { type: "SkillHeal"; skillName: string; amount: Health }
   | { type: "ManaRegenerated"; amount: Mana }
   | { type: "NotEnoughMana"; skillName: string; required: Mana; current: Mana }
-  | { type: "GoldDropped"; amount: Gold };
+  | { type: "GoldDropped"; amount: Gold }
+  | { type: "WaveStart"; wave: number; monsterCount: number }
+  | { type: "WaveCleared"; wave: number; reward?: Item[] };
 
 // アクション
 export type GameAction =

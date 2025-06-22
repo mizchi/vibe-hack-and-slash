@@ -1,0 +1,265 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/hacknslash/skills.schema.json",
+  "title": "Skills Schema",
+  "type": "object",
+  "required": ["skills"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/skill"
+      }
+    }
+  },
+  "definitions": {
+    "skill": {
+      "type": "object",
+      "required": ["id", "name", "description", "type", "manaCost", "cooldown", 
+                   "targetType", "effects", "triggerConditions", "priority"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z_]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Active", "Passive"]
+        },
+        "manaCost": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cooldown": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "targetType": {
+          "type": "string",
+          "enum": ["Self", "Enemy", "All"]
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/skillEffect"
+          }
+        },
+        "triggerConditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/triggerCondition"
+          }
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "requiredWeaponTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiredClass": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Warrior", "Mage", "Rogue", "Paladin"]
+          }
+        },
+        "guaranteedCritical": {
+          "type": "boolean"
+        }
+      }
+    },
+    "skillEffect": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "baseDamage", "scaling", "element"],
+          "properties": {
+            "type": {
+              "const": "Damage"
+            },
+            "baseDamage": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "scaling": {
+              "type": "number",
+              "minimum": 0
+            },
+            "element": {
+              "type": "string",
+              "enum": ["Physical", "Fire", "Ice", "Lightning", "Holy", "Dark"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "baseHeal", "scaling"],
+          "properties": {
+            "type": {
+              "const": "Heal"
+            },
+            "baseHeal": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "scaling": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "stat", "value", "duration"],
+          "properties": {
+            "type": {
+              "const": "Buff"
+            },
+            "stat": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            },
+            "duration": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "stat", "value", "duration"],
+          "properties": {
+            "type": {
+              "const": "Debuff"
+            },
+            "stat": {
+              "type": "string"
+            },
+            "value": {
+              "type": "number"
+            },
+            "duration": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "duration"],
+          "properties": {
+            "type": {
+              "const": "Stun"
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "damage", "duration", "element"],
+          "properties": {
+            "type": {
+              "const": "DamageOverTime"
+            },
+            "damage": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "duration": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "element": {
+              "type": "string",
+              "enum": ["Physical", "Fire", "Ice", "Lightning", "Holy", "Dark"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "percentage"],
+          "properties": {
+            "type": {
+              "const": "LifeDrain"
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      ]
+    },
+    "triggerCondition": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "const": "Always"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "percentage"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["HealthBelow", "ManaAbove", "EnemyHealthBelow"]
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["CriticalHit", "OnKill"]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "interval"],
+          "properties": {
+            "type": {
+              "const": "TurnInterval"
+            },
+            "interval": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
+      ]
+    }
+  }
+}

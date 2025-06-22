@@ -1,4 +1,5 @@
 {
+  "$schema": "../schemas/items.schema.json",
   "weapons": [
     {
       "id": "sword_basic",

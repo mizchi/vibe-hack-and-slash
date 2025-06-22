@@ -21,6 +21,11 @@ import type {
   PlayerClass,
   EquipmentSlot,
   Gold,
+  Strength,
+  Intelligence,
+  Dexterity,
+  Vitality,
+  ElementResistance,
 } from "./types.ts";
 import { playerAttack, monsterAttack, applyExperience } from "./combat.ts";
 import { rollLoot } from "./loot.ts";
@@ -142,7 +147,9 @@ export const createSession = (
 ): Session => ({
   id: sessionId,
   player,
+  currentMonster: undefined,
   defeatedCount: 0,
+  wave: 1, // Wave 1から開始
   state: "InProgress",
   startedAt: new Date(),
 });

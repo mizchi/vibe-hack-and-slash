@@ -1,4 +1,5 @@
 {
+  "$schema": "../schemas/skills.schema.json",
   "skills": [
     {
       "id": "fireball",
@@ -329,6 +330,211 @@
       ],
       "priority": 7,
       "requiredWeaponTags": ["Bow"]
+    },
+    {
+      "id": "berserker_rage",
+      "name": "バーサーカーレイジ",
+      "description": "Warrior専用。一時的に攻撃力とクリティカル率を大幅に上昇",
+      "type": "Active",
+      "manaCost": 25,
+      "cooldown": 10,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "damage",
+          "value": 30,
+          "duration": 5
+        },
+        {
+          "type": "Buff",
+          "stat": "criticalChance",
+          "value": 0.2,
+          "duration": 5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 8,
+      "requiredClass": ["Warrior"]
+    },
+    {
+      "id": "shield_bash",
+      "name": "シールドバッシュ",
+      "description": "Warrior/Paladin専用。盾で敵を強打してスタン",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 5,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 20,
+          "scaling": 0.5,
+          "element": "Physical"
+        },
+        {
+          "type": "Stun",
+          "duration": 2
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 6,
+      "requiredClass": ["Warrior", "Paladin"],
+      "requiredWeaponTags": ["Shield"]
+    },
+    {
+      "id": "mana_shield",
+      "name": "マナシールド",
+      "description": "Mage専用。MPを消費してダメージを吸収",
+      "type": "Active",
+      "manaCost": 20,
+      "cooldown": 8,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "defense",
+          "value": 50,
+          "duration": 3
+        }
+      ],
+      "triggerConditions": [
+        { "type": "HealthBelow", "percentage": 0.5 }
+      ],
+      "priority": 9,
+      "requiredClass": ["Mage"]
+    },
+    {
+      "id": "arcane_intellect",
+      "name": "アーケインインテレクト",
+      "description": "Mage専用。INTとスキルパワーを永続的に上昇",
+      "type": "Passive",
+      "manaCost": 0,
+      "cooldown": 0,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "intelligence",
+          "value": 10,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "skillPower",
+          "value": 15,
+          "duration": -1
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 1,
+      "requiredClass": ["Mage"]
+    },
+    {
+      "id": "shadow_strike",
+      "name": "シャドウストライク",
+      "description": "Rogue専用。影からの一撃で確実にクリティカル",
+      "type": "Active",
+      "manaCost": 20,
+      "cooldown": 4,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 35,
+          "scaling": 1.5,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 8,
+      "requiredClass": ["Rogue"],
+      "guaranteedCritical": true
+    },
+    {
+      "id": "evasion",
+      "name": "回避",
+      "description": "Rogue専用。一時的に回避率を大幅に上昇",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 8,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "defense",
+          "value": 30,
+          "duration": 4
+        },
+        {
+          "type": "Buff",
+          "stat": "criticalChance",
+          "value": 0.1,
+          "duration": 4
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "requiredClass": ["Rogue"]
+    },
+    {
+      "id": "holy_light",
+      "name": "ホーリーライト",
+      "description": "Paladin専用。聖なる光で敵にダメージを与え、同時に自身を回復",
+      "type": "Active",
+      "manaCost": 25,
+      "cooldown": 5,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 25,
+          "scaling": 1.0,
+          "element": "Holy"
+        },
+        {
+          "type": "Heal",
+          "baseHeal": 15,
+          "scaling": 0.5
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "requiredClass": ["Paladin"]
+    },
+    {
+      "id": "divine_shield",
+      "name": "ディバインシールド",
+      "description": "Paladin専用。短時間無敵状態になる",
+      "type": "Active",
+      "manaCost": 40,
+      "cooldown": 15,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "defense",
+          "value": 999,
+          "duration": 2
+        }
+      ],
+      "triggerConditions": [
+        { "type": "HealthBelow", "percentage": 0.2 }
+      ],
+      "priority": 10,
+      "requiredClass": ["Paladin"]
     }
   ]
 }

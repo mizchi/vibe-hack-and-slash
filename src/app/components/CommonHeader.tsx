@@ -6,9 +6,10 @@ import { formatGold } from "../../core/item-value.ts";
 type Props = {
   session: Session;
   currentView: "battle" | "equipment";
+  gameSpeed?: 0 | 1 | 3 | 5;
 };
 
-export const CommonHeader: React.FC<Props> = ({ session, currentView }) => {
+export const CommonHeader: React.FC<Props> = ({ session, currentView, gameSpeed = 1 }) => {
   return (
     <Box borderStyle="double" padding={1} marginBottom={1}>
       <Box flexDirection="column" width="100%">
@@ -21,6 +22,14 @@ export const CommonHeader: React.FC<Props> = ({ session, currentView }) => {
           </Box>
           <Box>
             <Text color="yellow">[Gold: {formatGold(session.player.gold)}]</Text>
+            {gameSpeed !== undefined && (
+              <>
+                <Text> </Text>
+                <Text color={gameSpeed === 0 ? "red" : gameSpeed > 1 ? "green" : "white"}>
+                  [Speed: x{gameSpeed}]
+                </Text>
+              </>
+            )}
           </Box>
         </Box>
         

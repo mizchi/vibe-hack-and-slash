@@ -32,11 +32,15 @@ export const GameContainer: React.FC<Props> = ({
   const [turn, setTurn] = useState(0);
   const [viewMode, setViewMode] = useState<ViewMode>("battle");
   const [viewKey, setViewKey] = useState(0); // 画面切り替え時のキー
+  const [gameSpeed, setGameSpeed] = useState<0 | 1 | 3 | 5>(1); // ゲームスピード
 
   // バトル自動進行
   useEffect(() => {
-    if (!session || !isInBattle || isPaused || session.state === "Completed") return;
+    if (!session || !isInBattle || isPaused || session.state === "Completed" || gameSpeed === 0) return;
 
+    const baseDelay = 1000;
+    const actualDelay = Math.floor(baseDelay / gameSpeed);
+    
     const timer = setTimeout(() => {
       const result = processBattleTurn(
         session, 
@@ -73,10 +77,10 @@ export const GameContainer: React.FC<Props> = ({
           setBattleLog((prev) => [...prev, { type: "PlayerHeal" as const, amount: totalStats.maxHealth }]);
         }
       }
-    }, 1000);
+    }, actualDelay);
 
     return () => clearTimeout(timer);
-  }, [session, isInBattle, isPaused, turn]);
+  }, [session, isInBattle, isPaused, turn, gameSpeed]);
 
   // キー入力
   useInput((input, key) => {
@@ -89,6 +93,14 @@ export const GameContainer: React.FC<Props> = ({
     // P キーで一時停止
     if (input === "p") {
       setIsPaused(!isPaused);
+    }
+    
+    // Space キーでゲームスピード切り替え
+    if (input === " ") {
+      const speeds: Array<0 | 1 | 3 | 5> = [0, 1, 3, 5];
+      const currentIndex = speeds.indexOf(gameSpeed);
+      const nextIndex = (currentIndex + 1) % speeds.length;
+      setGameSpeed(speeds[nextIndex]);
     }
 
     // R キーで休憩（全回復）
@@ -133,7 +145,7 @@ export const GameContainer: React.FC<Props> = ({
   return (
     <ClearScreen key={`view-${viewKey}`}>
       <Box flexDirection="column" height={40}>
-        <CommonHeader session={session} currentView={viewMode} />
+        <CommonHeader session={session} currentView={viewMode} gameSpeed={gameSpeed} />
         
         <Box flexGrow={1} overflow="hidden">
           {viewMode === "battle" ? (

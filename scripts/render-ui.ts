@@ -23,6 +23,7 @@ try {
   const defaultSession: Session = {
     id: "test-session",
     player: {
+      id: "player1",
       class: "Warrior",
       level: 1,
       experience: 0,
@@ -30,6 +31,7 @@ try {
       currentMana: 30,
       equipment: new Map(),
       skills: [],
+      skillCooldowns: new Map(),
       skillTimers: new Map(),
       gold: 100,
       baseStats: {
@@ -39,17 +41,28 @@ try {
         defense: 5,
         criticalChance: 0.1,
         criticalDamage: 1.5,
+        lifeSteal: 0,
+        manaRegen: 5,
+        skillPower: 10,
       },
-      attributes: {
+      baseAttributes: {
         strength: 10,
         intelligence: 5,
         dexterity: 8,
         vitality: 10,
       },
+      elementResistance: {
+        Physical: 0,
+        Fire: 0,
+        Ice: 0,
+        Lightning: 0,
+        Holy: 0,
+        Dark: 0,
+      },
     },
     defeatedCount: 0,
-    wave: 1,
     state: "InProgress",
+    startedAt: new Date(),
     ...state.session,
   };
 
@@ -81,6 +94,21 @@ try {
       });
     }
     defaultSession.player.skillTimers = skillTimersMap;
+  }
+  
+  // skillCooldowns をMapに変換
+  if (state.session?.player?.skillCooldowns) {
+    const skillCooldownsMap = new Map();
+    if (Array.isArray(state.session.player.skillCooldowns)) {
+      state.session.player.skillCooldowns.forEach(([skillId, cooldown]: any) => {
+        skillCooldownsMap.set(skillId, cooldown);
+      });
+    } else if (typeof state.session.player.skillCooldowns === "object") {
+      Object.entries(state.session.player.skillCooldowns).forEach(([skillId, cooldown]) => {
+        skillCooldownsMap.set(skillId, cooldown);
+      });
+    }
+    defaultSession.player.skillCooldowns = skillCooldownsMap;
   }
 
   // バトルログとインベントリを準備

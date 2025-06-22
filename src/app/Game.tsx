@@ -10,6 +10,8 @@ import { GameContainer } from "./components/GameContainer.tsx";
 import itemsData from "../../data/items.json" assert { type: "json" };
 import monstersData from "../../data/monsters.json" assert { type: "json" };
 import skillsData from "../../data/skills.json" assert { type: "json" };
+import starterEquipmentData from "../../data/starter-equipment.json" assert { type: "json" };
+import classSkillsData from "../../data/class-skills.json" assert { type: "json" };
 
 
 export const Game: React.FC = () => {
@@ -30,7 +32,31 @@ export const Game: React.FC = () => {
   // クラス選択後の処理
   const handleClassSelected = (playerClass: PlayerClass) => {
     setSelectedClass(playerClass);
-    const player = createInitialPlayer("player1", playerClass, skillsData.skills);
+    
+    // 職業別のスキルを取得
+    const classSkillIds = classSkillsData[playerClass] || [];
+    const classSkills = skillsData.skills.filter(skill => 
+      classSkillIds.includes(skill.id) || 
+      (!skill.requiredClass || skill.requiredClass.length === 0) // クラス制限のない基本スキルも含む
+    );
+    
+    const player = createInitialPlayer("player1", playerClass, classSkills);
+    
+    // 初期装備を付与
+    const starterEquipment = starterEquipmentData[playerClass] || [];
+    starterEquipment.forEach(({ baseItemId, slot }) => {
+      const baseItem = baseItems.get(baseItemId);
+      if (baseItem) {
+        const item = {
+          id: `starter_${baseItemId}`,
+          baseItem,
+          rarity: "Common",
+          level: 1
+        };
+        player.equipment.set(slot, item);
+      }
+    });
+    
     const newSession = createSession("session1", player);
     setSession(newSession);
     setCurrentView("Field");

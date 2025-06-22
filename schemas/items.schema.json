@@ -1,0 +1,185 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/hacknslash/items.schema.json",
+  "title": "Items Schema",
+  "type": "object",
+  "required": ["weapons", "armors", "accessories"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "weapons": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/baseItem"
+      }
+    },
+    "armors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/baseItem"
+      }
+    },
+    "accessories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/baseItem"
+      }
+    }
+  },
+  "definitions": {
+    "baseItem": {
+      "type": "object",
+      "required": ["id", "name", "type", "tags", "baseModifiers"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z_]+$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Weapon", "Armor", "Accessory"]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "OneHanded", "TwoHanded", "Shield", "Staff", "Dagger",
+              "Sword", "Axe", "Mace", "Bow", "Spear",
+              "HeavyArmor", "LightArmor", "ClothArmor",
+              "Ring", "Amulet", "Belt", "Helm", "Gloves", "Boots"
+            ]
+          }
+        },
+        "baseModifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/itemModifier"
+          }
+        },
+        "requiredLevel": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "requiredClass": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Warrior", "Mage", "Rogue", "Paladin"]
+          }
+        },
+        "weaponScaling": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "intelligence": {
+              "type": "number",
+              "minimum": 0
+            },
+            "dexterity": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "elementType": {
+          "type": "string",
+          "enum": ["Physical", "Fire", "Ice", "Lightning", "Holy", "Dark"]
+        }
+      }
+    },
+    "itemModifier": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["IncreaseDamage", "IncreaseHealth", "IncreaseDefense", 
+                       "IncreaseMana", "ManaRegen", "SkillPower",
+                       "IncreaseStrength", "IncreaseIntelligence", 
+                       "IncreaseDexterity", "IncreaseVitality"]
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "percentage"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["LifeSteal", "CriticalChance"]
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "multiplier"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["CriticalDamage"]
+            },
+            "multiplier": {
+              "type": "number",
+              "minimum": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "element", "value"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ElementResistance"]
+            },
+            "element": {
+              "type": "string",
+              "enum": ["Physical", "Fire", "Ice", "Lightning", "Holy", "Dark"]
+            },
+            "value": {
+              "type": "integer"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "element", "percentage"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ElementDamage"]
+            },
+            "element": {
+              "type": "string",
+              "enum": ["Physical", "Fire", "Ice", "Lightning", "Holy", "Dark"]
+            },
+            "percentage": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    }
+  }
+}
