@@ -28,14 +28,14 @@ const CompactBattleStatus: React.FC<{ battleStatus: Props["battleStatus"] }> = (
   if (!battleStatus.isInBattle) {
     return (
       <Box borderStyle="single" padding={1}>
-        <Text color="green">◆ 拠点 - 安全 ◆</Text>
+        <Text color="green">[拠点 - 安全]</Text>
       </Box>
     );
   }
 
   return (
     <Box borderStyle="single" padding={1}>
-      <Text color="red">◆ 戦闘中 ◆ </Text>
+      <Text color="red">[戦闘中] </Text>
       {battleStatus.currentMonster && (
         <Text>
           {battleStatus.currentMonster.name} Lv.{battleStatus.currentMonster.level} 
@@ -60,14 +60,15 @@ export const EquipmentDetailView: React.FC<Props> = ({
   const [inventoryTab, setInventoryTab] = useState<InventoryTab>("recent");
   const [recentItems, setRecentItems] = useState<Set<ItemId>>(new Set());
 
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 20;
   const playerStats = calculateTotalStats(session.player);
 
   // タブごとのアイテムフィルタリング
   const getFilteredItems = (): Item[] => {
     switch (inventoryTab) {
       case "recent":
-        return inventory.filter(item => recentItems.has(item.id));
+        // 最新順（新しい順）に表示
+        return inventory.filter(item => recentItems.has(item.id)).reverse();
       case "weapon":
         return inventory.filter(item => item.baseItem.type === "Weapon");
       case "armor":
@@ -220,141 +221,134 @@ export const EquipmentDetailView: React.FC<Props> = ({
 
   return (
     <Box flexDirection="column" height="100%">
-      {/* ヘッダー */}
-      <Box borderStyle="double" padding={1} marginBottom={1}>
-        <Text bold>🎒 装備管理</Text>
-        <Text> - </Text>
-        <Text color="yellow">{formatGold(session.player.gold)} G</Text>
-      </Box>
-
       {/* 簡易戦闘状況 */}
       <Box marginBottom={1}>
         <CompactBattleStatus battleStatus={battleStatus} />
       </Box>
 
-      <Box flexDirection="column" flexGrow={1}>
-        {/* インベントリ */}
-        <Box borderStyle="double" padding={1} marginBottom={1} height={12}>
-          {/* インベントリヘッダーとタブ */}
-          <Box flexDirection="column">
-            <Box>
-              <Text bold underline>インベントリ</Text>
-              <Text> ({inventory.length}/50) </Text>
-              {totalPages > 1 && <Text dimColor>[{inventoryPage + 1}/{totalPages}]</Text>}
-            </Box>
-            
-            {/* タブ表示 */}
-            <Box marginTop={1}>
-              {(() => {
-                const tabs = [
-                  { key: "recent", label: "新着", emoji: "🆕" },
-                  { key: "weapon", label: "武器", emoji: "⚔️" },
-                  { key: "armor", label: "防具", emoji: "🛡️" },
-                  { key: "accessory", label: "装飾", emoji: "💍" },
-                  { key: "all", label: "全て", emoji: "📦" },
-                ];
-                
-                return tabs.map((tab, index) => (
-                  <React.Fragment key={tab.key}>
-                    <Text
-                      color={inventoryTab === tab.key ? "cyan" : "gray"}
-                      bold={inventoryTab === tab.key}
-                    >
-                      {tab.emoji} {tab.label}
-                    </Text>
-                    {index < tabs.length - 1 && <Text> | </Text>}
-                  </React.Fragment>
-                ));
-              })()}
-            </Box>
-          </Box>
-          
-          <Box flexDirection="column" marginTop={1} height={8}>
-            {filteredItems.length === 0 ? (
-              <Text dimColor>
-                {inventoryTab === "recent" ? "新着アイテムなし" : "アイテムなし"}
-              </Text>
-            ) : (
-              <>
-                {currentPageItems.map((item, index) => {
-                const isSelected = index === selectedItemIndex;
-                const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
-                
-                const rarityColors = {
-                  Common: "gray",
-                  Magic: "blue", 
-                  Rare: "yellow",
-                  Legendary: "magenta",
-                };
+      {/* メインコンテンツ - 左右2分割 */}
+      <Box flexDirection="row" height={32}>
+        {/* 左側：インベントリ */}
+        <Box width="50%" flexDirection="column" marginRight={1}>
+          <Box borderStyle="double" padding={1} height={30}>
+            <Box flexDirection="column" height="100%">
+              {/* インベントリヘッダー */}
+              <Box>
+                <Text bold underline>インベントリ</Text>
+                <Text> ({inventory.length}/50) </Text>
+                {totalPages > 1 && <Text dimColor>[{inventoryPage + 1}/{totalPages}]</Text>}
+              </Box>
+              
+              {/* タブ表示 */}
+              <Box marginTop={1}>
+                {(() => {
+                  const tabs = [
+                    { key: "recent", label: "新着" },
+                    { key: "weapon", label: "武器" },
+                    { key: "armor", label: "防具" },
+                    { key: "accessory", label: "装飾" },
+                    { key: "all", label: "全て" },
+                  ];
+                  
+                  return tabs.map((tab, index) => (
+                    <React.Fragment key={tab.key}>
+                      <Text
+                        color={inventoryTab === tab.key ? "cyan" : "gray"}
+                        bold={inventoryTab === tab.key}
+                      >
+                        {tab.label}
+                      </Text>
+                      {index < tabs.length - 1 && <Text> | </Text>}
+                    </React.Fragment>
+                  ));
+                })()}
+              </Box>
+              
+              {/* アイテムリスト */}
+              <Box flexDirection="column" marginTop={1} flexGrow={1}>
+              {filteredItems.length === 0 ? (
+                <Text dimColor>
+                  {inventoryTab === "recent" ? "新着アイテムなし" : "アイテムなし"}
+                </Text>
+              ) : (
+                <>
+                  {currentPageItems.map((item, index) => {
+                  const isSelected = index === selectedItemIndex;
+                  const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
+                  
+                  const rarityColors = {
+                    Common: "gray",
+                    Magic: "blue", 
+                    Rare: "yellow",
+                    Legendary: "magenta",
+                  };
 
-                return (
-                  <Box key={index} flexDirection="column">
-                    <Box>
-                      <Text color={isSelected ? "cyan" : undefined}>
-                        {isSelected ? "▶ " : "  "}
-                      </Text>
-                      <Text color={rarityColors[item.rarity]}>
-                        {getItemDisplayName(item)}
-                      </Text>
-                      {recentItems.has(item.id) && inventoryTab !== "recent" && (
-                        <Text color="green"> 🆕</Text>
-                      )}
-                    </Box>
-                    {isSelected && (
-                      <Box marginLeft={3} flexDirection="column">
-                        {getItemStats(item).map((stat, i) => (
-                          <Text key={i} dimColor>{stat}</Text>
-                        ))}
-                        {validSlots.length > 0 && (
-                          <Text color="green">
-                            装備可能
-                          </Text>
+                  return (
+                    <Box key={index} flexDirection="column">
+                      <Box>
+                        <Text color={isSelected ? "cyan" : undefined}>
+                          {isSelected ? "▶ " : "  "}
+                        </Text>
+                        <Text color={rarityColors[item.rarity]}>
+                          {getItemDisplayName(item)}
+                        </Text>
+                        {recentItems.has(item.id) && inventoryTab !== "recent" && (
+                          <Text color="green"> [新]</Text>
                         )}
-                        <Text color="yellow">売却価値: {formatGold(calculateItemValue(item))} G</Text>
                       </Box>
-                    )}
-                  </Box>
-                );
-                })}
-              </>
-            )}
+                    </Box>
+                  );
+                  })}
+                </>
+              )}
+              </Box>
+            </Box>
           </Box>
         </Box>
-
-        {/* ステータスと装備 */}
-        <Box flexDirection="row" height={12}>
-          {/* 左側：現在のステータス */}
-          <Box width="33%" borderStyle="single" padding={1} marginRight={1}>
-            <Text bold underline>ステータス</Text>
-            <Box marginTop={1} flexDirection="column">
-              {/* 基本ステータス */}
-              <Box marginBottom={1}>
+        
+        {/* 右側：詳細情報 */}
+        <Box width="50%" flexDirection="column">
+          {/* アイテム詳細 */}
+          <Box borderStyle="round" padding={1} marginBottom={1} height={10}>
+            {currentPageItems[selectedItemIndex] ? (
+              <Box flexDirection="column">
+                <Text bold underline>アイテム詳細</Text>
                 {(() => {
-                  const attrs = calculateTotalAttributes(session.player);
+                  const item = currentPageItems[selectedItemIndex];
+                  const rarityColors = {
+                    Common: "gray",
+                    Magic: "blue", 
+                    Rare: "yellow",
+                    Legendary: "magenta",
+                  };
                   return (
                     <>
-                      <Text>STR: {attrs.strength} | INT: {attrs.intelligence}</Text>
-                      <Text>DEX: {attrs.dexterity} | VIT: {attrs.vitality}</Text>
+                      <Text color={rarityColors[item.rarity]} bold marginTop={1}>
+                        {getItemDisplayName(item)}
+                      </Text>
+                      <Text dimColor>{item.rarity} {item.baseItem.type}</Text>
+                      <Box flexDirection="column" marginTop={1}>
+                        {getItemStats(item).map((stat, i) => (
+                          <Text key={i}>{stat}</Text>
+                        ))}
+                      </Box>
+                      <Text color="yellow" marginTop={1}>売却価値: {formatGold(calculateItemValue(item))} G</Text>
                     </>
                   );
                 })()}
               </Box>
-              {/* 戦闘ステータス */}
-              <Text color="green">⚔ 攻撃力: {playerStats.damage}</Text>
-              <Text color="cyan">🛡 防御力: {playerStats.defense}</Text>
-              <Text color="red">❤️  体力: {playerStats.maxHealth}</Text>
-              <Text color="blue">🔮 魔力: {playerStats.maxMana}</Text>
-            </Box>
+            ) : (
+              <Text dimColor>アイテムを選択してください</Text>
+            )}
           </Box>
 
-          {/* 中央：装備変更プレビューとスキル */}
-          <Box width="34%" flexDirection="column" marginRight={1}>
-            {/* 装備変更プレビュー */}
+          {/* 装備変更プレビュー */}
+          <Box borderStyle="round" padding={1} marginBottom={1} height={8}>
             {(currentPageItems[selectedItemIndex] && 
-              getValidSlotsForItem(currentPageItems[selectedItemIndex], session.player.class, session.player.level).length > 0) && (
-              <Box borderStyle="round" padding={1} marginBottom={1}>
-              <Text bold>装備変更プレビュー</Text>
-              {(() => {
+              getValidSlotsForItem(currentPageItems[selectedItemIndex], session.player.class, session.player.level).length > 0) ? (
+              <>
+                <Text bold>装備変更プレビュー</Text>
+                {(() => {
                 const item = currentPageItems[selectedItemIndex];
                 const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
                 // 常に自動でスロットを決定
@@ -388,28 +382,56 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   <Box flexDirection="column" marginTop={1}>
                     <Text dimColor>スロット: {targetSlot}</Text>
                     {changes.attack.diff !== 0 && (
-                      <Text>⚔ 攻撃: {changes.attack.current}{formatChange(changes.attack)}</Text>
+                      <Text>攻撃: {changes.attack.current}{formatChange(changes.attack)}</Text>
                     )}
                     {changes.defense.diff !== 0 && (
-                      <Text>🛡 防御: {changes.defense.current}{formatChange(changes.defense)}</Text>
+                      <Text>防御: {changes.defense.current}{formatChange(changes.defense)}</Text>
                     )}
                     {changes.health.diff !== 0 && (
-                      <Text>❤️  HP: {changes.health.current}{formatChange(changes.health)}</Text>
+                      <Text>HP: {changes.health.current}{formatChange(changes.health)}</Text>
                     )}
                     {changes.mana.diff !== 0 && (
-                      <Text>🔮 MP: {changes.mana.current}{formatChange(changes.mana)}</Text>
+                      <Text>MP: {changes.mana.current}{formatChange(changes.mana)}</Text>
                     )}
                   </Box>
                 );
               })()}
-              </Box>
+              </>
+            ) : (
+              <Text dimColor>装備可能なアイテムがありません</Text>
             )}
-
-            {/* スキルダメージプレビュー */}
-            {session.player.skills.length > 0 && (
-              <Box borderStyle="single" padding={1}>
-              <Text bold underline>スキル予測ダメージ</Text>
-              <Box flexDirection="column" marginTop={1}>
+          </Box>
+          
+          {/* 現在のステータス */}
+          <Box borderStyle="single" padding={1} marginBottom={1} height={7}>
+            <Text bold underline>ステータス</Text>
+            <Box marginTop={1} flexDirection="column">
+              {/* 基本ステータス */}
+              <Box marginBottom={1}>
+                {(() => {
+                  const attrs = calculateTotalAttributes(session.player);
+                  return (
+                    <>
+                      <Text>STR: {attrs.strength} | INT: {attrs.intelligence}</Text>
+                      <Text>DEX: {attrs.dexterity} | VIT: {attrs.vitality}</Text>
+                    </>
+                  );
+                })()}
+              </Box>
+              {/* 戦闘ステータス */}
+              <Text color="green">攻撃力: {playerStats.damage}</Text>
+              <Text color="cyan">防御力: {playerStats.defense}</Text>
+              <Text color="red">体力: {playerStats.maxHealth}</Text>
+              <Text color="blue">魔力: {playerStats.maxMana}</Text>
+            </Box>
+          </Box>
+          
+          {/* スキルダメージプレビュー */}
+          <Box borderStyle="single" padding={1} height={6}>
+            {session.player.skills.length > 0 ? (
+              <>
+                <Text bold underline>スキル予測ダメージ</Text>
+                <Box flexDirection="column" marginTop={1}>
                 {session.player.skills.slice(0, 3).map(skill => {
                   const damageEffect = skill.effects.find(e => e.type === "Damage");
                   if (!damageEffect || damageEffect.type !== "Damage") return null;
@@ -439,13 +461,15 @@ export const EquipmentDetailView: React.FC<Props> = ({
                     </Text>
                   );
                 })}
-              </Box>
-              </Box>
+                </Box>
+              </>
+            ) : (
+              <Text dimColor>スキルなし</Text>
             )}
           </Box>
-
-          {/* 右側：装備中アイテム */}
-          <Box width="33%" borderStyle="single" padding={1}>
+          
+          {/* 装備中アイテム */}
+          <Box borderStyle="single" padding={1} height={6}>
             <Text bold underline>装備中</Text>
             {session.player.equipment.size === 0 ? (
               <Text dimColor marginTop={1}>装備なし</Text>
@@ -488,7 +512,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
       {/* 操作説明 */}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: アイテム | ←→: タブ切替 | Space: 装備 | Del: 売却 | Tab: 戦闘詳細へ
+          ↑↓: アイテム | ←→: タブ切替 | Space: 装備 | Del: 売却
         </Text>
       </Box>
     </Box>

@@ -80,6 +80,19 @@ export const getAvailableSkills = (
       const timer = player.skillTimers.get(skill.id) || 0;
       if (timer > 0) return false;
       
+      // 武器タグチェック
+      if (skill.requiredWeaponTags && skill.requiredWeaponTags.length > 0) {
+        // MainHandの武器を取得
+        const mainHandWeapon = player.equipment.get("MainHand");
+        if (!mainHandWeapon) return false;
+        
+        // 武器のタグに必要なタグが含まれているかチェック
+        const hasRequiredTag = skill.requiredWeaponTags.some(tag => 
+          mainHandWeapon.baseItem.tags.includes(tag)
+        );
+        if (!hasRequiredTag) return false;
+      }
+      
       // 発動条件チェック
       return checkSkillTriggerConditions(skill.triggerConditions, {
         player,

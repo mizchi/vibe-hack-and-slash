@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { useInput } from "ink";
+import { Box, useInput } from "ink";
 import type { Session, Item, BattleEvent, BaseItem, ItemId, Skill } from "../../core/types.ts";
 import { processBattleTurn, processAction } from "../../core/session.ts";
 import { BattleDetailView } from "./BattleDetailView.tsx";
 import { EquipmentDetailView } from "./EquipmentDetailView.tsx";
 import { ClearScreen } from "./ClearScreen.tsx";
+import { CommonHeader } from "./CommonHeader.tsx";
 
 type Props = {
   session: Session;
@@ -131,21 +132,27 @@ export const GameContainer: React.FC<Props> = ({
   // ビューの表示（画面クリア付き）
   return (
     <ClearScreen key={`view-${viewKey}`}>
-      {viewMode === "battle" ? (
-        <BattleDetailView
-          session={session}
-          battleLog={battleLog}
-          isPaused={isPaused}
-        />
-      ) : (
-        <EquipmentDetailView
-          session={session}
-          onSessionUpdate={handleSessionUpdate}
-          inventory={inventory}
-          onInventoryUpdate={handleInventoryUpdate}
-          battleStatus={battleStatus}
-        />
-      )}
+      <Box flexDirection="column" height={40}>
+        <CommonHeader session={session} currentView={viewMode} />
+        
+        <Box flexGrow={1} overflow="hidden">
+          {viewMode === "battle" ? (
+            <BattleDetailView
+              session={session}
+              battleLog={battleLog}
+              isPaused={isPaused}
+            />
+          ) : (
+            <EquipmentDetailView
+              session={session}
+              onSessionUpdate={handleSessionUpdate}
+              inventory={inventory}
+              onInventoryUpdate={handleInventoryUpdate}
+              battleStatus={battleStatus}
+            />
+          )}
+        </Box>
+      </Box>
     </ClearScreen>
   );
 };

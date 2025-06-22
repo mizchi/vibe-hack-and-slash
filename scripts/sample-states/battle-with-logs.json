@@ -1,0 +1,106 @@
+{
+  "session": {
+    "player": {
+      "class": "Warrior",
+      "level": 5,
+      "experience": 250,
+      "currentHealth": 80,
+      "currentMana": 25,
+      "gold": 1500,
+      "equipment": [],
+      "skills": [
+        {
+          "id": "power_strike",
+          "name": "パワーストライク",
+          "type": "Active",
+          "manaCost": 20,
+          "cooldown": 2,
+          "effects": [
+            {
+              "type": "Damage",
+              "baseDamage": 30,
+              "scaling": 1.2,
+              "element": "Physical"
+            }
+          ],
+          "triggerConditions": [{ "type": "Always" }],
+          "priority": 6
+        }
+      ],
+      "skillTimers": [],
+      "baseStats": {
+        "maxHealth": 150,
+        "maxMana": 40,
+        "damage": 25,
+        "defense": 10,
+        "criticalChance": 0.15,
+        "criticalDamage": 2.0
+      },
+      "attributes": {
+        "strength": 15,
+        "intelligence": 8,
+        "dexterity": 10,
+        "vitality": 12
+      }
+    },
+    "currentMonster": {
+      "name": "ゴブリンウォーリアー",
+      "level": 4,
+      "currentHealth": 50,
+      "stats": {
+        "maxHealth": 100,
+        "damage": 15,
+        "defense": 5
+      }
+    },
+    "defeatedCount": 23,
+    "wave": 3,
+    "state": "InProgress"
+  },
+  "battleLog": [
+    { "type": "PlayerAttack", "damage": 25, "isCritical": false },
+    { "type": "MonsterAttack", "damage": 10 },
+    { "type": "SkillUsed", "skillName": "パワーストライク", "manaCost": 20 },
+    { "type": "SkillDamage", "skillName": "パワーストライク", "damage": 45 },
+    { "type": "PlayerAttack", "damage": 50, "isCritical": true },
+    { "type": "MonsterDefeated", "experience": 50 },
+    { "type": "ItemDropped", "item": {
+      "id": "sword_001",
+      "baseItem": {
+        "id": "iron_sword",
+        "name": "Iron Sword",
+        "type": "Weapon",
+        "tags": ["Sword"]
+      },
+      "rarity": "Magic",
+      "itemLevel": 5,
+      "modifiers": [
+        { "type": "FlatDamage", "value": 10 }
+      ]
+    }},
+    { "type": "GoldDropped", "amount": 75 },
+    { "type": "PlayerHeal", "amount": 30 },
+    { "type": "ManaRegenerated", "amount": 5 },
+    { "type": "MonsterAttack", "damage": 12 },
+    { "type": "PlayerAttack", "damage": 28, "isCritical": false },
+    { "type": "SkillUsed", "skillName": "ファイアボール", "manaCost": 10 },
+    { "type": "SkillDamage", "skillName": "ファイアボール", "damage": 35 },
+    { "type": "NotEnoughMana", "skillName": "パワーストライク", "required": 20 },
+    { "type": "PlayerLevelUp", "newLevel": 6 },
+    { "type": "ItemDropped", "item": {
+      "id": "potion_002",
+      "baseItem": {
+        "id": "mana_potion",
+        "name": "Mana Potion",
+        "type": "Consumable",
+        "tags": []
+      },
+      "rarity": "Common",
+      "itemLevel": 1,
+      "modifiers": []
+    }},
+    { "type": "MonsterAttack", "damage": 8 },
+    { "type": "PlayerAttack", "damage": 30, "isCritical": false },
+    { "type": "MonsterDefeated", "experience": 60 }
+  ]
+}

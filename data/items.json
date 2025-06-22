@@ -4,7 +4,7 @@
       "id": "sword_basic",
       "name": "Iron Sword",
       "type": "Weapon",
-      "tags": ["OneHanded"],
+      "tags": ["OneHanded", "Sword"],
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 20 }
       ],
@@ -18,7 +18,7 @@
       "id": "sword_advanced",
       "name": "Steel Sword",
       "type": "Weapon",
-      "tags": ["OneHanded"],
+      "tags": ["OneHanded", "Sword"],
       "requiredLevel": 5,
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 35 }
@@ -33,7 +33,7 @@
       "id": "axe_basic",
       "name": "Battle Axe",
       "type": "Weapon",
-      "tags": ["TwoHanded"],
+      "tags": ["TwoHanded", "Axe"],
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 40 },
         { "type": "CriticalDamage", "multiplier": 0.4 }
@@ -86,6 +86,50 @@
         { "type": "IncreaseDefense", "value": 15 },
         { "type": "IncreaseHealth", "value": 20 }
       ]
+    },
+    {
+      "id": "mace_basic",
+      "name": "Iron Mace",
+      "type": "Weapon",
+      "tags": ["OneHanded", "Mace"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 25 },
+        { "type": "IncreaseDefense", "value": 5 }
+      ],
+      "weaponScaling": {
+        "strength": 0.9,
+        "vitality": 0.3
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "spear_basic",
+      "name": "Iron Spear",
+      "type": "Weapon",
+      "tags": ["TwoHanded", "Spear"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 30 }
+      ],
+      "weaponScaling": {
+        "strength": 0.6,
+        "dexterity": 0.5
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "bow_basic",
+      "name": "Hunting Bow",
+      "type": "Weapon",
+      "tags": ["TwoHanded", "Bow"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 22 },
+        { "type": "CriticalChance", "percentage": 0.15 }
+      ],
+      "weaponScaling": {
+        "dexterity": 1.0,
+        "strength": 0.2
+      },
+      "elementType": "Physical"
     }
   ],
   "armors": [

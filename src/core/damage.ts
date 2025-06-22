@@ -82,9 +82,10 @@ export const calculateTotalAttributes = (player: Player): BaseStats => {
   // 装備からの属性ボーナスを加算
   for (const [_, item] of player.equipment) {
     const allModifiers = [
-      ...item.baseItem.baseModifiers,
+      ...(item.baseItem.baseModifiers || []),
       ...(item.prefix?.modifiers || []),
-      ...(item.suffix?.modifiers || [])
+      ...(item.suffix?.modifiers || []),
+      ...(item.modifiers || [])
     ];
     
     for (const mod of allModifiers) {
@@ -122,9 +123,10 @@ export const calculateTotalElementResistance = (player: Player): ElementResistan
   // 装備からの属性耐性を加算
   for (const [_, item] of player.equipment) {
     const allModifiers = [
-      ...item.baseItem.baseModifiers,
+      ...(item.baseItem.baseModifiers || []),
       ...(item.prefix?.modifiers || []),
-      ...(item.suffix?.modifiers || [])
+      ...(item.suffix?.modifiers || []),
+      ...(item.modifiers || [])
     ];
     
     for (const mod of allModifiers) {
@@ -182,12 +184,31 @@ export const calculateSkillDamage = (
 ): number => {
   const totalAttributes = calculateTotalAttributes(player);
   const stats = calculateTotalStats(player);
+  const mainWeapon = player.equipment.get("MainHand");
   
-  // INTベースのスキルパワー計算
-  const skillPower = stats.skillPower + (totalAttributes.intelligence * 0.5);
+  // 武器タイプに応じたスケーリング計算
+  let scalingDamage = 0;
+  
+  if (mainWeapon && mainWeapon.baseItem.weaponScaling) {
+    const weaponScaling = mainWeapon.baseItem.weaponScaling;
+    
+    // 武器のスケーリングに基づいてダメージを計算
+    if (weaponScaling.strength) {
+      scalingDamage += totalAttributes.strength * weaponScaling.strength;
+    }
+    if (weaponScaling.intelligence) {
+      scalingDamage += totalAttributes.intelligence * weaponScaling.intelligence;
+    }
+    if (weaponScaling.dexterity) {
+      scalingDamage += totalAttributes.dexterity * weaponScaling.dexterity;
+    }
+  } else {
+    // 武器なしの場合はINTベースのスキルパワー計算
+    scalingDamage = stats.skillPower + (totalAttributes.intelligence * 0.5);
+  }
   
   // ダメージ計算
-  let damage = baseDamage + (skillPower * scaling);
+  let damage = baseDamage + (scalingDamage * scaling);
   
   // ターゲットがいる場合は属性耐性を適用
   if (target) {

@@ -113,7 +113,7 @@ const INITIAL_ELEMENT_RESISTANCE: ElementResistance = {
 };
 
 // 初期プレイヤー作成
-export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Warrior"): Player => {
+export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Warrior", skills: Skill[] = []): Player => {
   const baseStats = CLASS_BASE_STATS[playerClass];
   const baseAttributes = CLASS_BASE_ATTRIBUTES[playerClass];
   
@@ -127,7 +127,7 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
     baseStats,
     baseAttributes,
     equipment: new Map(),
-    skills: [],
+    skills, // 全スキルを付与
     skillCooldowns: new Map(),
     skillTimers: new Map(),
     elementResistance: { ...INITIAL_ELEMENT_RESISTANCE },

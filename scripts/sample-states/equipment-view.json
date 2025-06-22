@@ -1,0 +1,190 @@
+{
+  "session": {
+    "player": {
+      "class": "Mage",
+      "level": 10,
+      "experience": 800,
+      "currentHealth": 120,
+      "currentMana": 180,
+      "gold": 5000,
+      "equipment": [
+        ["MainHand", {
+          "id": "staff_001",
+          "baseItem": {
+            "id": "mystic_staff",
+            "name": "Mystic Staff",
+            "type": "Weapon",
+            "tags": ["Staff", "TwoHanded"]
+          },
+          "rarity": "Rare",
+          "itemLevel": 10,
+          "modifiers": [
+            { "type": "FlatDamage", "value": 15 },
+            { "type": "IncreasedMana", "value": 20 }
+          ]
+        }],
+        ["Armor", {
+          "id": "robe_001",
+          "baseItem": {
+            "id": "silk_robe",
+            "name": "Silk Robe",
+            "type": "Armor",
+            "tags": ["BodyArmor", "Cloth"]
+          },
+          "rarity": "Magic",
+          "itemLevel": 8,
+          "modifiers": [
+            { "type": "FlatDefense", "value": 5 },
+            { "type": "IncreasedMana", "value": 15 }
+          ]
+        }],
+        ["Ring1", {
+          "id": "ring_001",
+          "baseItem": {
+            "id": "gold_ring",
+            "name": "Gold Ring",
+            "type": "Accessory",
+            "tags": ["Ring"]
+          },
+          "rarity": "Magic",
+          "itemLevel": 5,
+          "modifiers": [
+            { "type": "IncreasedDamage", "value": 10 }
+          ]
+        }]
+      ],
+      "skills": [
+        {
+          "id": "fireball",
+          "name": "ファイアボール",
+          "type": "Active",
+          "manaCost": 10,
+          "cooldown": 0,
+          "effects": [
+            {
+              "type": "Damage",
+              "baseDamage": 15,
+              "scaling": 0.8,
+              "element": "Fire"
+            }
+          ]
+        },
+        {
+          "id": "heal",
+          "name": "ヒール",
+          "type": "Active",
+          "manaCost": 15,
+          "cooldown": 3,
+          "effects": [
+            {
+              "type": "Heal",
+              "baseHeal": 30,
+              "scaling": 0.5
+            }
+          ]
+        }
+      ],
+      "baseStats": {
+        "maxHealth": 120,
+        "maxMana": 180,
+        "damage": 35,
+        "defense": 8,
+        "criticalChance": 0.2,
+        "criticalDamage": 2.5
+      },
+      "attributes": {
+        "strength": 8,
+        "intelligence": 20,
+        "dexterity": 12,
+        "vitality": 10
+      }
+    },
+    "defeatedCount": 156,
+    "wave": 8
+  },
+  "inventory": [
+    {
+      "id": "sword_002",
+      "baseItem": {
+        "id": "steel_sword",
+        "name": "Steel Sword",
+        "type": "Weapon",
+        "tags": ["Sword", "OneHanded"]
+      },
+      "rarity": "Magic",
+      "itemLevel": 7,
+      "modifiers": [
+        { "type": "FlatDamage", "value": 12 },
+        { "type": "IncreasedAttackSpeed", "value": 5 }
+      ]
+    },
+    {
+      "id": "helm_001",
+      "baseItem": {
+        "id": "iron_helm",
+        "name": "Iron Helm",
+        "type": "Armor",
+        "tags": ["Helm"]
+      },
+      "rarity": "Common",
+      "itemLevel": 5,
+      "modifiers": [
+        { "type": "FlatDefense", "value": 3 }
+      ]
+    },
+    {
+      "id": "boots_001",
+      "baseItem": {
+        "id": "leather_boots",
+        "name": "Leather Boots",
+        "type": "Armor",
+        "tags": ["Boots"]
+      },
+      "rarity": "Magic",
+      "itemLevel": 6,
+      "modifiers": [
+        { "type": "FlatDefense", "value": 2 },
+        { "type": "IncreasedMovementSpeed", "value": 10 }
+      ]
+    },
+    {
+      "id": "ring_002",
+      "baseItem": {
+        "id": "silver_ring",
+        "name": "Silver Ring",
+        "type": "Accessory",
+        "tags": ["Ring"]
+      },
+      "rarity": "Rare",
+      "itemLevel": 9,
+      "modifiers": [
+        { "type": "IncreasedHealth", "value": 15 },
+        { "type": "IncreasedMana", "value": 10 }
+      ]
+    },
+    {
+      "id": "amulet_001",
+      "baseItem": {
+        "id": "ruby_amulet",
+        "name": "Ruby Amulet",
+        "type": "Accessory",
+        "tags": ["Amulet"]
+      },
+      "rarity": "Legendary",
+      "itemLevel": 10,
+      "modifiers": [
+        { "type": "IncreasedDamage", "value": 20 },
+        { "type": "IncreasedCriticalChance", "value": 5 },
+        { "type": "ElementalResistance", "element": "Fire", "value": 25 }
+      ]
+    }
+  ],
+  "battleStatus": {
+    "isInBattle": true,
+    "currentMonster": {
+      "name": "スケルトンメイジ",
+      "level": 9,
+      "healthPercent": 75
+    }
+  }
+}

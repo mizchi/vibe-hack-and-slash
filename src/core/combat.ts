@@ -37,9 +37,10 @@ export const calculateTotalStats = (player: Player): CharacterStats => {
     if (!item) return;
     
     const allModifiers = [
-      ...item.baseItem.baseModifiers,
+      ...(item.baseItem.baseModifiers || []),
       ...(item.prefix?.modifiers || []),
       ...(item.suffix?.modifiers || []),
+      ...(item.modifiers || [])
     ];
     
     allModifiers.forEach((mod) => {

@@ -72,6 +72,11 @@ export type ItemTag =
   | "Shield"         // 盾
   | "Staff"          // 杖
   | "Dagger"         // 短剣
+  | "Sword"          // 剣
+  | "Axe"            // 斧
+  | "Mace"           // メイス
+  | "Bow"            // 弓
+  | "Spear"          // 槍
   | "HeavyArmor"     // 重装甲
   | "LightArmor"     // 軽装甲
   | "ClothArmor"     // 布装甲
@@ -257,6 +262,7 @@ export type Skill = {
   effects: SkillEffect[];
   triggerConditions: SkillTriggerCondition[]; // 全て満たす必要がある
   priority: number; // 高いほど優先
+  requiredWeaponTags?: ItemTag[]; // 必要な武器タグ（いずれか1つ満たせばOK）
 };
 
 // バトルイベント

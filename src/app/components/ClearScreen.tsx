@@ -22,7 +22,7 @@ export const ClearScreen: React.FC<Props> = ({ children }) => {
   }, [stdout]);
 
   return (
-    <Box flexDirection="column" width="100%" height="100%">
+    <Box flexDirection="column" width="100%" height={40}>
       {children}
     </Box>
   );

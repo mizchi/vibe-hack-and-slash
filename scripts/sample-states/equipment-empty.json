@@ -1,0 +1,34 @@
+{
+  "session": {
+    "player": {
+      "class": "Rogue",
+      "level": 1,
+      "experience": 0,
+      "currentHealth": 80,
+      "currentMana": 40,
+      "gold": 50,
+      "equipment": [],
+      "skills": [],
+      "baseStats": {
+        "maxHealth": 80,
+        "maxMana": 40,
+        "damage": 12,
+        "defense": 3,
+        "criticalChance": 0.25,
+        "criticalDamage": 2.0
+      },
+      "attributes": {
+        "strength": 8,
+        "intelligence": 6,
+        "dexterity": 15,
+        "vitality": 8
+      }
+    },
+    "defeatedCount": 0,
+    "wave": 1
+  },
+  "inventory": [],
+  "battleStatus": {
+    "isInBattle": false
+  }
+}

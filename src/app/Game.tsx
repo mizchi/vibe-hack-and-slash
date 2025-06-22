@@ -30,9 +30,7 @@ export const Game: React.FC = () => {
   // クラス選択後の処理
   const handleClassSelected = (playerClass: PlayerClass) => {
     setSelectedClass(playerClass);
-    const player = createInitialPlayer("player1", playerClass);
-    // 初期スキルを付与
-    player.skills = skillsData.skills.slice(0, 3); // 最初の3つのスキル
+    const player = createInitialPlayer("player1", playerClass, skillsData.skills);
     const newSession = createSession("session1", player);
     setSession(newSession);
     setCurrentView("Field");

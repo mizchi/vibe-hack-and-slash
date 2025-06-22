@@ -1,0 +1,83 @@
+{
+  "session": {
+    "player": {
+      "class": "Warrior",
+      "level": 5,
+      "experience": 250,
+      "currentHealth": 80,
+      "currentMana": 25,
+      "gold": 1500,
+      "equipment": [],
+      "skills": [
+        {
+          "id": "power_strike",
+          "name": "パワーストライク",
+          "type": "Active",
+          "manaCost": 20,
+          "cooldown": 2,
+          "effects": [
+            {
+              "type": "Damage",
+              "baseDamage": 30,
+              "scaling": 1.2,
+              "element": "Physical"
+            }
+          ],
+          "triggerConditions": [{ "type": "Always" }],
+          "priority": 6
+        }
+      ],
+      "skillTimers": [],
+      "baseStats": {
+        "maxHealth": 150,
+        "maxMana": 40,
+        "damage": 25,
+        "defense": 10,
+        "criticalChance": 0.15,
+        "criticalDamage": 2.0
+      },
+      "attributes": {
+        "strength": 15,
+        "intelligence": 8,
+        "dexterity": 10,
+        "vitality": 12
+      }
+    },
+    "currentMonster": {
+      "name": "ゴブリンウォーリアー",
+      "level": 4,
+      "currentHealth": 50,
+      "stats": {
+        "maxHealth": 100,
+        "damage": 15,
+        "defense": 5
+      }
+    },
+    "defeatedCount": 23,
+    "wave": 3,
+    "state": "InProgress"
+  },
+  "battleLog": [
+    { "type": "PlayerAttack", "damage": 25, "isCritical": false },
+    { "type": "MonsterAttack", "damage": 10 },
+    { "type": "SkillUsed", "skillName": "パワーストライク", "manaCost": 20 },
+    { "type": "SkillDamage", "skillName": "パワーストライク", "damage": 45 },
+    { "type": "PlayerAttack", "damage": 50, "isCritical": true },
+    { "type": "MonsterDefeated", "experience": 50 },
+    { "type": "ItemDropped", "item": {
+      "id": "potion_001",
+      "baseItem": {
+        "id": "health_potion",
+        "name": "Health Potion",
+        "type": "Consumable",
+        "tags": []
+      },
+      "rarity": "Common",
+      "itemLevel": 1,
+      "modifiers": []
+    }},
+    { "type": "GoldDropped", "amount": 75 },
+    { "type": "PlayerHeal", "amount": 30 },
+    { "type": "ManaRegenerated", "amount": 5 }
+  ]
+}
