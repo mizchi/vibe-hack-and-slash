@@ -33,9 +33,16 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
 };
 
 const BattleLogFull: React.FC<{ events: BattleEvent[] }> = ({ events }) => {
+  // 固定高さのために空の行で埋める
+  const displayEvents = [...events.slice(-20)];
+  while (displayEvents.length < 20) {
+    displayEvents.unshift({ type: "PlayerAttack", damage: 0 as any, isCritical: false });
+  }
+  
   const formatEvent = (event: BattleEvent): { text: string; color?: string } => {
     switch (event.type) {
       case "PlayerAttack":
+        if (event.damage === 0) return { text: "" }; // 空行用
         return {
           text: event.isCritical
             ? `⚔️  クリティカルヒット！ ${event.damage}ダメージを与えた！`
@@ -73,10 +80,10 @@ const BattleLogFull: React.FC<{ events: BattleEvent[] }> = ({ events }) => {
 
   return (
     <Box flexDirection="column" height={20}>
-      {events.slice(-20).map((event, i) => {
+      {displayEvents.map((event, i) => {
         const { text, color } = formatEvent(event);
         return (
-          <Text key={i} color={color} dimColor={i < events.length - 10}>
+          <Text key={i} color={color} dimColor={i < displayEvents.length - 10}>
             {text}
           </Text>
         );
@@ -89,7 +96,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
   const playerStats = calculateTotalStats(session.player);
 
   return (
-    <Box flexDirection="column" minHeight={30}>
+    <Box flexDirection="column" height="100%">
       {/* ヘッダー */}
       <Box borderStyle="double" padding={1} marginBottom={1}>
         <Text bold>⚔️  戦闘詳細</Text>
@@ -144,7 +151,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
       </Box>
 
       {/* 戦闘ログ（フル表示） */}
-      <Box borderStyle="single" padding={1} flexGrow={1}>
+      <Box borderStyle="single" padding={1} height={15}>
         <Text bold underline>戦闘ログ (最新20件)</Text>
         <Box marginTop={1}>
           <BattleLogFull events={battleLog} />

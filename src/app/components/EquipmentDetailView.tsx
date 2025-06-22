@@ -219,7 +219,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
   });
 
   return (
-    <Box flexDirection="column" minHeight={30}>
+    <Box flexDirection="column" height="100%">
       {/* ヘッダー */}
       <Box borderStyle="double" padding={1} marginBottom={1}>
         <Text bold>🎒 装備管理</Text>
@@ -232,9 +232,9 @@ export const EquipmentDetailView: React.FC<Props> = ({
         <CompactBattleStatus battleStatus={battleStatus} />
       </Box>
 
-      <Box flexDirection="row" flexGrow={1}>
-        {/* 左側：インベントリ */}
-        <Box width="60%" borderStyle="double" padding={1} marginRight={1}>
+      <Box flexDirection="column" flexGrow={1}>
+        {/* インベントリ */}
+        <Box borderStyle="double" padding={1} marginBottom={1} height={12}>
           {/* インベントリヘッダーとタブ */}
           <Box flexDirection="column">
             <Box>
@@ -269,13 +269,14 @@ export const EquipmentDetailView: React.FC<Props> = ({
             </Box>
           </Box>
           
-          {filteredItems.length === 0 ? (
-            <Text dimColor marginTop={1}>
-              {inventoryTab === "recent" ? "新着アイテムなし" : "アイテムなし"}
-            </Text>
-          ) : (
-            <Box flexDirection="column" marginTop={1}>
-              {currentPageItems.map((item, index) => {
+          <Box flexDirection="column" marginTop={1} height={8}>
+            {filteredItems.length === 0 ? (
+              <Text dimColor>
+                {inventoryTab === "recent" ? "新着アイテムなし" : "アイテムなし"}
+              </Text>
+            ) : (
+              <>
+                {currentPageItems.map((item, index) => {
                 const isSelected = index === selectedItemIndex;
                 const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
                 
@@ -314,15 +315,16 @@ export const EquipmentDetailView: React.FC<Props> = ({
                     )}
                   </Box>
                 );
-              })}
-            </Box>
-          )}
+                })}
+              </>
+            )}
+          </Box>
         </Box>
 
-        {/* 右側：ステータスと装備 */}
-        <Box width="40%" flexDirection="column">
-          {/* 現在のステータス */}
-          <Box borderStyle="single" padding={1} marginBottom={1}>
+        {/* ステータスと装備 */}
+        <Box flexDirection="row" height={12}>
+          {/* 左側：現在のステータス */}
+          <Box width="33%" borderStyle="single" padding={1} marginRight={1}>
             <Text bold underline>ステータス</Text>
             <Box marginTop={1} flexDirection="column">
               {/* 基本ステータス */}
@@ -345,10 +347,12 @@ export const EquipmentDetailView: React.FC<Props> = ({
             </Box>
           </Box>
 
-          {/* 装備変更プレビュー */}
-          {(currentPageItems[selectedItemIndex] && 
-            getValidSlotsForItem(currentPageItems[selectedItemIndex], session.player.class, session.player.level).length > 0) && (
-            <Box borderStyle="round" padding={1} marginBottom={1}>
+          {/* 中央：装備変更プレビューとスキル */}
+          <Box width="34%" flexDirection="column" marginRight={1}>
+            {/* 装備変更プレビュー */}
+            {(currentPageItems[selectedItemIndex] && 
+              getValidSlotsForItem(currentPageItems[selectedItemIndex], session.player.class, session.player.level).length > 0) && (
+              <Box borderStyle="round" padding={1} marginBottom={1}>
               <Text bold>装備変更プレビュー</Text>
               {(() => {
                 const item = currentPageItems[selectedItemIndex];
@@ -398,12 +402,12 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   </Box>
                 );
               })()}
-            </Box>
-          )}
+              </Box>
+            )}
 
-          {/* スキルダメージプレビュー */}
-          {session.player.skills.length > 0 && (
-            <Box borderStyle="single" padding={1} marginBottom={1}>
+            {/* スキルダメージプレビュー */}
+            {session.player.skills.length > 0 && (
+              <Box borderStyle="single" padding={1}>
               <Text bold underline>スキル予測ダメージ</Text>
               <Box flexDirection="column" marginTop={1}>
                 {session.player.skills.slice(0, 3).map(skill => {
@@ -436,11 +440,12 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   );
                 })}
               </Box>
-            </Box>
-          )}
+              </Box>
+            )}
+          </Box>
 
-          {/* 装備中アイテム */}
-          <Box borderStyle="single" padding={1} flexGrow={1}>
+          {/* 右側：装備中アイテム */}
+          <Box width="33%" borderStyle="single" padding={1}>
             <Text bold underline>装備中</Text>
             {session.player.equipment.size === 0 ? (
               <Text dimColor marginTop={1}>装備なし</Text>
