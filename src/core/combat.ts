@@ -1,0 +1,168 @@
+import { Result, Ok, Err, GameError } from "./types.ts";
+import type {
+  Player,
+  Monster,
+  Damage,
+  Health,
+  BattleEvent,
+  CharacterStats,
+  Item,
+} from "./types.ts";
+
+// ステータス計算
+export const calculateTotalStats = (player: Player): CharacterStats => {
+  const base = { ...player.baseStats };
+  const equipment = [player.equipment.weapon, player.equipment.armor, player.equipment.accessory];
+  
+  equipment.forEach((item) => {
+    if (!item) return;
+    
+    const allModifiers = [
+      ...item.baseItem.baseModifiers,
+      ...(item.prefix?.modifiers || []),
+      ...(item.suffix?.modifiers || []),
+    ];
+    
+    allModifiers.forEach((mod) => {
+      switch (mod.type) {
+        case "IncreaseDamage":
+          base.damage = (base.damage + mod.value) as Damage;
+          break;
+        case "IncreaseHealth":
+          base.maxHealth = (base.maxHealth + mod.value) as Health;
+          break;
+        case "IncreaseDefense":
+          base.defense += mod.value;
+          break;
+        case "LifeSteal":
+          base.lifeSteal += mod.percentage;
+          break;
+        case "CriticalChance":
+          base.criticalChance = Math.min(1, base.criticalChance + mod.percentage);
+          break;
+        case "CriticalDamage":
+          base.criticalDamage += mod.multiplier;
+          break;
+      }
+    });
+  });
+  
+  return base;
+};
+
+// ダメージ計算
+export const calculateDamage = (
+  attacker: CharacterStats,
+  defender: CharacterStats,
+  random: () => number = Math.random
+): { damage: Damage; isCritical: boolean } => {
+  const baseDamage = attacker.damage;
+  const defense = defender.defense;
+  
+  // クリティカル判定
+  const isCritical = random() < attacker.criticalChance;
+  const critMultiplier = isCritical ? attacker.criticalDamage : 1;
+  
+  // ダメージ計算（防御力で軽減）
+  const damage = Math.max(
+    1,
+    Math.floor((baseDamage * critMultiplier * (100 / (100 + defense))) * (0.9 + random() * 0.2))
+  ) as Damage;
+  
+  return { damage, isCritical };
+};
+
+// プレイヤー攻撃
+export const playerAttack = (
+  player: Player,
+  monster: Monster,
+  random: () => number = Math.random
+): Result<{ events: BattleEvent[]; updatedMonster: Monster }, GameError> => {
+  const playerStats = calculateTotalStats(player);
+  const { damage, isCritical } = calculateDamage(playerStats, monster.stats, random);
+  
+  const newHealth = Math.max(0, monster.currentHealth - damage) as Health;
+  const updatedMonster: Monster = {
+    ...monster,
+    currentHealth: newHealth,
+  };
+  
+  const events: BattleEvent[] = [
+    { type: "PlayerAttack", damage, isCritical }
+  ];
+  
+  // ライフスティール
+  if (playerStats.lifeSteal > 0) {
+    const healAmount = Math.floor(damage * playerStats.lifeSteal) as Health;
+    events.push({ type: "PlayerHeal", amount: healAmount });
+  }
+  
+  // モンスター撃破
+  if (newHealth === 0) {
+    const experience = (monster.level * 10) as Experience;
+    events.push({
+      type: "MonsterDefeated",
+      monsterId: monster.id,
+      experience,
+    });
+  }
+  
+  return Ok({ events, updatedMonster });
+};
+
+// モンスター攻撃
+export const monsterAttack = (
+  monster: Monster,
+  player: Player,
+  random: () => number = Math.random
+): Result<{ events: BattleEvent[]; updatedPlayer: Player }, GameError> => {
+  const playerStats = calculateTotalStats(player);
+  const { damage } = calculateDamage(monster.stats, playerStats, random);
+  
+  const newHealth = Math.max(0, player.currentHealth - damage) as Health;
+  const updatedPlayer: Player = {
+    ...player,
+    currentHealth: newHealth,
+  };
+  
+  const events: BattleEvent[] = [
+    { type: "MonsterAttack", damage }
+  ];
+  
+  if (newHealth === 0) {
+    events.push({ type: "PlayerDefeated" });
+  }
+  
+  return Ok({ events, updatedPlayer });
+};
+
+// 経験値とレベルアップ
+export const applyExperience = (
+  player: Player,
+  experience: Experience
+): { player: Player; leveledUp: boolean } => {
+  const newExp = (player.experience + experience) as Experience;
+  const expForNextLevel = (player.level * 100) as Experience;
+  
+  if (newExp >= expForNextLevel) {
+    return {
+      player: {
+        ...player,
+        level: (player.level + 1) as Level,
+        experience: (newExp - expForNextLevel) as Experience,
+        baseStats: {
+          ...player.baseStats,
+          maxHealth: (player.baseStats.maxHealth + 10) as Health,
+          damage: (player.baseStats.damage + 2) as Damage,
+        },
+        currentHealth: (player.currentHealth + 10) as Health,
+      },
+      leveledUp: true,
+    };
+  }
+  
+  return {
+    player: { ...player, experience: newExp },
+    leveledUp: false,
+  };
+};

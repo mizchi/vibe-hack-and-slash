@@ -1,0 +1,93 @@
+{
+  "weapons": [
+    {
+      "id": "sword_basic",
+      "name": "Iron Sword",
+      "type": "Weapon",
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 10 }
+      ]
+    },
+    {
+      "id": "sword_advanced",
+      "name": "Steel Sword",
+      "type": "Weapon",
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 15 }
+      ]
+    },
+    {
+      "id": "axe_basic",
+      "name": "Battle Axe",
+      "type": "Weapon",
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 18 },
+        { "type": "CriticalDamage", "multiplier": 0.2 }
+      ]
+    },
+    {
+      "id": "dagger_basic",
+      "name": "Swift Dagger",
+      "type": "Weapon",
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 8 },
+        { "type": "CriticalChance", "percentage": 0.1 }
+      ]
+    }
+  ],
+  "armors": [
+    {
+      "id": "armor_cloth",
+      "name": "Cloth Armor",
+      "type": "Armor",
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 5 },
+        { "type": "IncreaseHealth", "value": 10 }
+      ]
+    },
+    {
+      "id": "armor_leather",
+      "name": "Leather Armor",
+      "type": "Armor",
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 10 },
+        { "type": "IncreaseHealth", "value": 20 }
+      ]
+    },
+    {
+      "id": "armor_chain",
+      "name": "Chainmail",
+      "type": "Armor",
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 15 },
+        { "type": "IncreaseHealth", "value": 30 }
+      ]
+    }
+  ],
+  "accessories": [
+    {
+      "id": "ring_basic",
+      "name": "Iron Ring",
+      "type": "Accessory",
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 3 }
+      ]
+    },
+    {
+      "id": "amulet_health",
+      "name": "Health Amulet",
+      "type": "Accessory",
+      "baseModifiers": [
+        { "type": "IncreaseHealth", "value": 25 }
+      ]
+    },
+    {
+      "id": "ring_vampire",
+      "name": "Vampire Ring",
+      "type": "Accessory",
+      "baseModifiers": [
+        { "type": "LifeSteal", "percentage": 0.05 }
+      ]
+    }
+  ]
+}

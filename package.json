@@ -4,13 +4,9 @@
   "description": "A hack and slash game built with React Ink",
   "type": "module",
   "scripts": {
-    "start": "tsx src/index.tsx",
-    "dev": "tsx watch src/index.tsx",
-    "simulate": "tsx src/simulate-clean.ts",
-    "poc:ink": "tsx poc/01-ink.tsx",
+    "start": "tsx src/app/index.tsx",
+    "dev": "tsx watch src/app/index.tsx",
     "poc:ink-no-input": "tsx poc/02-ink-no-input.tsx",
-    "snapshot": "tsx src/snapshot-game.ts",
-    "snapshot:show": "tsx src/snapshot-game.ts show",
     "build": "tsc",
     "test": "vitest",
     "format": "biome format --write .",
@@ -18,7 +14,12 @@
     "check": "biome check --write .",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["cli", "game", "hacknslash", "react-ink"],
+  "keywords": [
+    "cli",
+    "game",
+    "hacknslash",
+    "react-ink"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
