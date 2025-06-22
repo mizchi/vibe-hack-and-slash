@@ -1,0 +1,40 @@
+{
+  "name": "hacknslash",
+  "version": "0.0.1",
+  "description": "A hack and slash game built with React Ink",
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/index.tsx",
+    "dev": "tsx watch src/index.tsx",
+    "simulate": "tsx src/simulate-clean.ts",
+    "poc:ink": "tsx poc/01-ink.tsx",
+    "poc:ink-no-input": "tsx poc/02-ink-no-input.tsx",
+    "snapshot": "tsx src/snapshot-game.ts",
+    "snapshot:show": "tsx src/snapshot-game.ts show",
+    "build": "tsc",
+    "test": "vitest",
+    "format": "biome format --write .",
+    "lint": "oxlint",
+    "check": "biome check --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["cli", "game", "hacknslash", "react-ink"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ink": "^5.0.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.14",
+    "oxlint": "^1.2.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
