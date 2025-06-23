@@ -1,0 +1,31 @@
+{
+  "name": "ink-browser",
+  "version": "0.1.0",
+  "description": "React Ink compatibility layer for browser environments",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": {
+      "import": "./index.ts",
+      "types": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "keywords": [
+    "react",
+    "ink",
+    "terminal",
+    "browser",
+    "xterm",
+    "cli"
+  ],
+  "license": "MIT"
+}

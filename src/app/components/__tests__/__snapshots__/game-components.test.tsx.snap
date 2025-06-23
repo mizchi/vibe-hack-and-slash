@@ -1,73 +1,69 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`BattleDetailView > スナップショット - バトル詳細画面 1`] = `
-"
-  ERROR  Cannot read properties of undefined (reading 'map')
+"┌────────────────────────────────────────────────┐ ┌───────────────────────────────────────────────┐
+│                                                │ │                                               │
+│ 味方                                           │ │ 敵 (Wave                                      │
+│     Warrior Lv.5                               │ │ 1)       ゴブリン Lv.3                        │
+│     HP:███████████░░░░░░░░░░░░░░░░ 80/200 (40%)│ │          HP:██████████████░░░░░░░░░░ 30/50    │
+│        █          ░                            │ │             ███           ░         (60%)     │
+│     ○3                                         │ │                                               │
+│                                                │ │                                               │
+└────────────────────────────────────────────────┘ └───────────────────────────────────────────────┘
 
- src/app/components/BattleDetailView.tsx:347:6
+                                         ┌─────────────────────────────────────────────────────────┐
+                                         │                                                         │
+                                         │ 戦闘ログ (最新15件)                                     │
+                                         │                                                         │
+                                         │ 全て | 戦闘 | アイテム | イベント                       │
+                                         │                                                         │
+                                         │ ▶  [被弾] 15ダメージを受けた                            │
+                                         │   [攻撃] 20ダメージを与えた                             │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         │                                                         │
+                                         └─────────────────────────────────────────────────────────┘
 
- 344:
- 345:   // フィルタリングされたイベント（IDを付与）
- 346:   const filteredEventsWithId = battleLog
- 347:     .map((event, index) => ({ event, id: getEventId(event, index) }))
- 348:     .filter(({ event }) => {
- 349:       switch (logFilter) {
- 350:         case "all":
-
- - BattleDetailView (src/app/components/BattleDetailView.tsx:347:6)
- -renderWithHoo (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconci
-  s            ler/cjs/react-reconciler.development.js:6659:18)
- -mountIndeterminateCom (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react
-  onent                -reconciler/cjs/react-reconciler.development.js:11276:13)
- -beginWor (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconciler/c
-          js/react-reconciler.development.js:12799:16)
- -beginWork$ (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconciler
-            /cjs/react-reconciler.development.js:19608:14)
- -performUnitOfW (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconc
-  rk            iler/cjs/react-reconciler.development.js:18742:12)
- -workLoopSyn (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconcile
-             r/cjs/react-reconciler.development.js:18648:5)
- -renderRootSy (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconcil
-  c           er/cjs/react-reconciler.development.js:18616:7)
- -performSyncWorkOn (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-rec
-  oot              onciler/cjs/react-reconciler.development.js:18232:20)
- -flushSyncCallba (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-recon
-  ks             ciler/cjs/react-reconciler.development.js:2936:22)
-"
+↑↓: ログ選択 | ←→: フィルター | Enter: 詳細 | P: 一時停止 | R: 休憩"
 `;
 
 exports[`GamePlayView > スナップショット - ゲームプレイ画面 1`] = `
-"
-  ERROR  Cannot read properties of undefined (reading 'vitality')
+"╔══════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                                  ║
+║ ⚔️  Hack & Slash - 拠点                                                                          ║
+║                                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════════╝
 
- src/app/components/GamePlayView.tsx:609:71
+┌──────────────────────────────────────┐ ┌─────────────────────────────────────────────────────────┐
+│                                      │ │                                                         │
+│ ◆ WarH███░░░░   M████░░░ 3EXP:撃破💰  │ │ ◆ メニュー ◆                                            │
+│ rior  ███░░░░80/ ████░░░/5150/:  250 │ │                                                         │
+│ Lv.5     ░░  200 ██      (00  3体 G  │ │ ▶ 戦闘開始                                              │
+│ ◆             (4        0%)          │ │   休憩（全回復）                                        │
+│              0%)                     │ │                                                         │
+└──────────────────────────────────────┘ └─────────────────────────────────────────────────────────┘
 
- 606:           {/* 現在のステータス */}
- 607:           <Box marginTop={1}>
- 608:             <Text color="green">⚔ 基礎ダメージ: {playerStats.baseDamage}</Text>
- 609:             <Text color="cyan">🛡 VIT: {session.player.baseAttributes.vitality}</Text>
- 610:             <Text color="red">❤️  体力: {playerStats.maxHealth}</Text>
- 611:             <Text color="blue">🔮 魔力: {playerStats.maxMana}</Text>
- 612:           </Box>
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                  │
+│ バトルログ                                                                                       │
+│                                                                                                  │
+│                                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
 
- - GamePlayView (src/app/components/GamePlayView.tsx:609:71)
- -renderWithHoo (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconci
-  s            ler/cjs/react-reconciler.development.js:6659:18)
- -mountIndeterminateCom (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react
-  onent                -reconciler/cjs/react-reconciler.development.js:11276:13)
- -beginWor (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconciler/c
-          js/react-reconciler.development.js:12799:16)
- -beginWork$ (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconciler
-            /cjs/react-reconciler.development.js:19608:14)
- -performUnitOfW (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconc
-  rk            iler/cjs/react-reconciler.development.js:18742:12)
- -workLoopSyn (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconcile
-             r/cjs/react-reconciler.development.js:18648:5)
- -renderRootSy (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-reconcil
-  c           er/cjs/react-reconciler.development.js:18616:7)
- -performSyncWorkOn (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-rec
-  oot              onciler/cjs/react-reconciler.development.js:18232:20)
- -flushSyncCallba (node_modules/.pnpm/react-reconciler@0.29.2_react@18.3.1/node_modules/react-recon
-  ks             ciler/cjs/react-reconciler.development.js:2936:22)
-"
+┌────────────────────────────────────────────────┐ ┌───────────────────────────────────────────────┐
+│                                                │ │                                               │
+│ インベントリ (0/50)                            │ │ ステー                                        │
+│                     アイテムなし               │ │ タス  ⚔ 基礎ダメ🛡    ❤️  体力🔮    ━━    な  │
+│                                                │ │       ージ: 10  VIT:   200    魔力: 装備中し  │
+│                                                │ │                 12            50    ━━        │
+│                                                │ │                                               │
+└────────────────────────────────────────────────┘ └───────────────────────────────────────────────┘
+
+Tab: インベントリ | ↑↓: 選択 | Enter: 決定 | Ctrl+C: 終了"
 `;

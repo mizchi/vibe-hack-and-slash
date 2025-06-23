@@ -4,11 +4,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import { ItemsDataSchema } from '../src/schemas/item-schema.ts';
-import { SkillsDataSchema } from '../src/schemas/skill-schema.ts';
-import { MonstersDataSchema } from '../src/schemas/monster-schema.ts';
-import { StarterEquipmentDataSchema } from '../src/schemas/starter-equipment-schema.ts';
-import { ClassSkillsDataSchema } from '../src/schemas/class-skills-schema.ts';
+import { ItemsDataSchema } from '../data/schemas/item-schema.ts';
+import { SkillsDataSchema } from '../data/schemas/skill-schema.ts';
+import { MonstersDataSchema } from '../data/schemas/monster-schema.ts';
+import { StarterEquipmentDataSchema } from '../data/schemas/starter-equipment-schema.ts';
+import { ClassSkillsDataSchema } from '../data/schemas/class-skills-schema.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

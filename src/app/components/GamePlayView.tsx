@@ -608,7 +608,7 @@ export const GamePlayView: React.FC<Props> = ({
           {/* 現在のステータス */}
           <Box marginTop={1}>
             <Text color="green">⚔ 基礎ダメージ: {playerStats.baseDamage}</Text>
-            <Text color="cyan">🛡 VIT: {session.player.baseAttributes.vitality}</Text>
+            <Text color="cyan">🛡 VIT: {session.player.baseStats.vitality || 12}</Text>
             <Text color="red">❤️  体力: {playerStats.maxHealth}</Text>
             <Text color="blue">🔮 魔力: {playerStats.maxMana}</Text>
           </Box>

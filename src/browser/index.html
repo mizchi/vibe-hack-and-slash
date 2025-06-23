@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hack & Slash - Browser Version</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background-color: #1e1e1e;
+      font-family: monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    #terminal-container {
+      background-color: #000;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      color: #fff;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <h1>⚔️ Hack & Slash</h1>
+    <div id="terminal-container"></div>
+  </div>
+  
+  <script>
+    // グローバル process オブジェクトを設定
+    window.process = {
+      env: {
+        FORCE_COLOR: 'true',
+        NODE_ENV: 'production',
+        CI: 'false'
+      },
+      platform: 'browser',
+      stdout: null,
+      stderr: null,
+      stdin: null,
+      exit: () => {},
+      on: () => {},
+      off: () => {},
+      removeListener: () => {},
+      cwd: () => '/',
+      chdir: () => {},
+      umask: () => 0
+    };
+    
+    // グローバル Buffer を設定
+    window.Buffer = {
+      from: (str) => str,
+      isBuffer: () => false
+    };
+    
+    // setImmediate のポリフィル
+    window.setImmediate = window.setImmediate || ((fn) => setTimeout(fn, 0));
+  </script>
+  
+  <script type="module" src="./browser-entry.tsx"></script>
+</body>
+</html>

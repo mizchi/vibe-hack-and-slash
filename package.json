@@ -21,7 +21,10 @@
     "check": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "check:schema": "tsx scripts/check-schema.ts",
-    "generate:schemas": "tsx scripts/generate-schemas.ts"
+    "generate:schemas": "tsx scripts/generate-schemas.ts",
+    "dev:browser": "vite",
+    "build:browser": "vite build",
+    "preview:browser": "vite preview"
   },
   "keywords": [
     "cli",
@@ -34,6 +37,7 @@
   "dependencies": {
     "ink": "^5.0.1",
     "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.5"
   },
@@ -41,11 +45,32 @@
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.6.0",
+    "assert": "^2.1.0",
+    "buffer": "^6.0.3",
+    "css-loader": "^7.1.2",
+    "events": "^3.3.0",
+    "html-webpack-plugin": "^5.6.3",
     "ink-testing-library": "^4.0.0",
+    "os-browserify": "^0.3.0",
     "oxlint": "^1.2.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.2",
     "tsx": "^4.19.2",
+    "tty-browserify": "^0.0.1",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "util": "^0.12.5",
+    "vite": "^6.3.5",
+    "vitest": "^2.1.8",
+    "webpack": "^5.99.9",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
   },
   "engines": {
     "node": ">=18"
