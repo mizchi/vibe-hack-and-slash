@@ -169,8 +169,6 @@ export type CharacterStats = {
   criticalChance: number;
   criticalDamage: number;
   lifeSteal: number;
-  maxMana: Mana;
-  manaRegen: number;
   skillPower: number;
 };
 
@@ -191,6 +189,12 @@ export type Buff = {
   duration: number; // 残りターン数
 };
 
+// リソースシステム
+export type ResourceColor = "White" | "Red" | "Blue" | "Green" | "Black";
+export type ResourcePool = {
+  [key in ResourceColor]: number;
+};
+
 export type Player = {
   id: PlayerId;
   name: string;
@@ -198,7 +202,6 @@ export type Player = {
   level: Level;
   experience: Experience;
   currentHealth: Health;
-  currentMana: Mana;
   baseStats: CharacterStats;
   baseAttributes: BaseStats; // STR/INT/DEX/VIT
   equipment: Map<EquipmentSlot, Item>; // スロットごとの装備
@@ -209,6 +212,7 @@ export type Player = {
   activeBuffs: Buff[]; // アクティブなバフ
   elementResistance: ElementResistance; // 属性耐性
   gold: Gold;
+  resourcePool: ResourcePool; // 現在のリソース
 };
 
 // モンスターティア
@@ -224,6 +228,9 @@ export type Monster = {
   stats: CharacterStats;
   elementResistance: ElementResistance; // 属性耐性
   lootTable: LootEntry[];
+  resourcePool?: ResourcePool; // リソースプール（オプション）
+  skills?: Skill[]; // スキル（オプション）
+  skillCooldowns?: Map<SkillId, number>; // クールダウン（オプション）
 };
 
 export type LootEntry = {
@@ -251,7 +258,7 @@ export type Session = {
 };
 
 // スキルシステム
-export type SkillType = "Active" | "Passive";
+export type SkillType = "Active" | "Passive" | "Basic";
 export type SkillTargetType = "Self" | "Enemy" | "All";
 
 export type SkillEffect =
@@ -272,6 +279,12 @@ export type SkillTriggerCondition =
   | { type: "OnKill" }
   | { type: "TurnInterval"; interval: number };
 
+export type ResourceGeneration = {
+  color: ResourceColor;
+  amount: number;
+  chance: number;
+};
+
 export type Skill = {
   id: SkillId;
   name: string;
@@ -286,6 +299,8 @@ export type Skill = {
   requiredWeaponTags?: ItemTag[]; // 必要な武器タグ（いずれか1つ満たせばOK）
   requiredClass?: PlayerClass[]; // 必要な職業（いずれか1つ満たせばOK）
   guaranteedCritical?: boolean; // 確実にクリティカルになるか
+  resourceCost?: ResourcePool; // リソース消費
+  resourceGeneration?: ResourceGeneration[]; // リソース生成
 };
 
 // バトルイベント
@@ -304,7 +319,8 @@ export type BattleEvent =
   | { type: "NotEnoughMana"; skillName: string; required: Mana; current: Mana }
   | { type: "GoldDropped"; amount: Gold }
   | { type: "WaveStart"; wave: number; monsterCount: number }
-  | { type: "WaveCleared"; wave: number; reward?: Item[] };
+  | { type: "WaveCleared"; wave: number; reward?: Item[] }
+  | { type: "PassiveTriggered"; skillName: string; effect: string };
 
 // アクション
 export type GameAction =

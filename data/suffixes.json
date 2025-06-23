@@ -1,0 +1,231 @@
+{
+  "$schema": "../schemas/suffixes.schema.json",
+  "suffixes": [
+    {
+      "id": "power",
+      "name": "・オブ・パワー",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "giant",
+      "name": "・オブ・ジャイアント",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 10
+        },
+        {
+          "type": "IncreaseVitality",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "wisdom",
+      "name": "・オブ・ウィズダム",
+      "modifiers": [
+        {
+          "type": "IncreaseIntelligence",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "sorcery",
+      "name": "・オブ・ソーサリー",
+      "modifiers": [
+        {
+          "type": "IncreaseIntelligence",
+          "value": 10
+        },
+        {
+          "type": "IncreaseMana",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "agility",
+      "name": "・オブ・アジリティ",
+      "modifiers": [
+        {
+          "type": "IncreaseDexterity",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "shadow",
+      "name": "・オブ・シャドウ",
+      "modifiers": [
+        {
+          "type": "IncreaseDexterity",
+          "value": 10
+        },
+        {
+          "type": "CriticalChance",
+          "percentage": 8
+        }
+      ]
+    },
+    {
+      "id": "endurance",
+      "name": "・オブ・エンデュランス",
+      "modifiers": [
+        {
+          "type": "IncreaseVitality",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "titan",
+      "name": "・オブ・タイタン",
+      "modifiers": [
+        {
+          "type": "IncreaseVitality",
+          "value": 10
+        },
+        {
+          "type": "IncreaseHealth",
+          "value": 40
+        }
+      ]
+    },
+    {
+      "id": "resistance",
+      "name": "・オブ・レジスタンス",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Physical",
+          "value": 5
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Fire",
+          "value": 5
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Lightning",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "flame_ward",
+      "name": "・オブ・フレイムワード",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Fire",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "storm_ward",
+      "name": "・オブ・ストームワード",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Lightning",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "holy_ward",
+      "name": "・オブ・ホーリーワード",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Holy",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "arcane_ward",
+      "name": "・オブ・アーケインワード",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Arcane",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "protection",
+      "name": "・オブ・プロテクション",
+      "modifiers": [
+        {
+          "type": "ElementResistance",
+          "element": "Physical",
+          "value": 15
+        },
+        {
+          "type": "IncreaseDefense",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "slaying",
+      "name": "・オブ・スレイング",
+      "modifiers": [
+        {
+          "type": "IncreaseDamage",
+          "value": 15
+        },
+        {
+          "type": "CriticalChance",
+          "percentage": 3
+        }
+      ]
+    },
+    {
+      "id": "regeneration",
+      "name": "・オブ・リジェネレーション",
+      "modifiers": [
+        {
+          "type": "LifeSteal",
+          "percentage": 3
+        },
+        {
+          "type": "ManaRegen",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "balance",
+      "name": "・オブ・バランス",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 2
+        },
+        {
+          "type": "IncreaseIntelligence",
+          "value": 2
+        },
+        {
+          "type": "IncreaseDexterity",
+          "value": 2
+        },
+        {
+          "type": "IncreaseVitality",
+          "value": 2
+        }
+      ]
+    }
+  ]
+}

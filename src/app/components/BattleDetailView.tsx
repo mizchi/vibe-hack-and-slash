@@ -77,7 +77,7 @@ const BattleLogWithSelection: React.FC<{
       case "PlayerDefeated":
         return { text: `[死亡] 倒れてしまった...`, color: "red" };
       case "SkillUsed":
-        return { text: `[スキル] ${event.skillName}を発動！ (-${event.manaCost}MP)`, color: "blue" };
+        return { text: `[スキル] ${event.skillName}を発動！`, color: "blue" };
       case "SkillDamage":
         return { 
           text: `[スキル] ${event.skillName}で${event.damage}ダメージ！`, 
@@ -86,15 +86,17 @@ const BattleLogWithSelection: React.FC<{
       case "SkillHeal":
         return { text: `[スキル] ${event.skillName}で${event.amount}回復！`, color: "green" };
       case "ManaRegenerated":
-        return { text: `[MP回復] マナが${event.amount}回復`, color: "blue" };
+        return { text: "" }; // MP回復ログは表示しない
       case "NotEnoughMana":
-        return { text: `[MP不足] マナ不足！ ${event.skillName}には${event.required}MP必要`, color: "gray" };
+        return { text: "" }; // MP不足ログは表示しない
       case "GoldDropped":
         return { text: `[Gold] ${formatGold(event.amount)}ゴールド獲得！`, color: "yellow" };
       case "WaveStart":
         return { text: `[Wave ${event.wave}] ${event.monsterCount}体の敵が出現！`, color: "magenta" };
       case "WaveCleared":
         return { text: `[Wave ${event.wave}] クリア！`, color: "yellow" };
+      case "PassiveTriggered":
+        return { text: `  └ ${event.effect}`, color: "cyan" };
       default:
         return { text: "" };
     }
@@ -216,9 +218,14 @@ const LogDetailView: React.FC<{
             <Text>消費MP: {event.manaCost}</Text>
             
             <Box marginTop={1}>
-              <Text bold>現在のMP:</Text>
-              <Text color="blue">{session.player.currentMana}/{playerStats.maxMana}</Text>
-              <Text dimColor>MP回復: {playerStats.manaRegen}/ターン</Text>
+              <Text bold>現在のリソース:</Text>
+              <Box flexDirection="row">
+                {session.player.resourcePool.White > 0 && <Text color="white">○{session.player.resourcePool.White} </Text>}
+                {session.player.resourcePool.Red > 0 && <Text color="red">●{session.player.resourcePool.Red} </Text>}
+                {session.player.resourcePool.Blue > 0 && <Text color="blue">●{session.player.resourcePool.Blue} </Text>}
+                {session.player.resourcePool.Green > 0 && <Text color="green">●{session.player.resourcePool.Green} </Text>}
+                {session.player.resourcePool.Black > 0 && <Text color="magenta">●{session.player.resourcePool.Black}</Text>}
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -356,8 +363,8 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
         case "combat":
           return event.type === "PlayerAttack" || event.type === "MonsterAttack" || 
                  event.type === "SkillDamage" || event.type === "PlayerHeal" || 
-                 event.type === "SkillHeal" || event.type === "ManaRegenerated" ||
-                 event.type === "SkillUsed" || event.type === "NotEnoughMana";
+                 event.type === "SkillHeal" || event.type === "SkillUsed" ||
+                 event.type === "PassiveTriggered";
         case "loot":
           return event.type === "ItemDropped" || event.type === "GoldDropped";
         case "event":
@@ -435,89 +442,292 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
 
       {/* 戦闘状況 */}
       <Box flexDirection="row" marginBottom={1}>
-        {/* プレイヤー情報 */}
+        {/* 左側：味方 */}
         <Box width="50%" borderStyle="single" padding={1} marginRight={1}>
-          <Box flexDirection="column">
-            <Text bold color="green">{session.player.class} Lv.{session.player.level}</Text>
-            <HealthBar
-              current={session.player.currentHealth}
-              max={playerStats.maxHealth}
-              label="HP"
-              color="green"
-            />
-            <HealthBar
-              current={session.player.currentMana}
-              max={playerStats.maxMana}
-              label="MP"
-              color="blue"
-            />
-            <Box marginTop={1} flexDirection="column">
-              <Text>基礎ダメージ: {playerStats.baseDamage}</Text>
-              <Text dimColor>STR: {session.player.baseAttributes.strength} INT: {session.player.baseAttributes.intelligence}</Text>
+          <Text bold underline color="green">味方</Text>
+          <Box flexDirection="column" marginTop={1}>
+            {/* プレイヤー */}
+            <Box flexDirection="column">
+              <Box>
+                <Text color="green">{session.player.class} Lv.{session.player.level}</Text>
+              </Box>
+              <Box>
+                <HealthBar
+                  current={session.player.currentHealth}
+                  max={playerStats.maxHealth}
+                  label="HP"
+                  color="green"
+                  width={30}
+                />
+              </Box>
+              <Box>
+                {/* リソース表示（一行） */}
+                {(() => {
+                  const pool = session.player.resourcePool;
+                  const resourceDisplay = [];
+                  if (pool.White > 0) resourceDisplay.push(<Text key="w" color="white">○{pool.White}</Text>);
+                  if (pool.Red > 0) resourceDisplay.push(<Text key="r" color="red">●{pool.Red}</Text>);
+                  if (pool.Blue > 0) resourceDisplay.push(<Text key="b" color="blue">●{pool.Blue}</Text>);
+                  if (pool.Green > 0) resourceDisplay.push(<Text key="g" color="green">●{pool.Green}</Text>);
+                  if (pool.Black > 0) resourceDisplay.push(<Text key="k" color="magenta">●{pool.Black}</Text>);
+                  
+                  return resourceDisplay.map((elem, idx) => (
+                    <React.Fragment key={idx}>
+                      {elem}
+                      {idx < resourceDisplay.length - 1 && <Text> </Text>}
+                    </React.Fragment>
+                  ));
+                })()}
+              </Box>
             </Box>
           </Box>
         </Box>
 
-        {/* 敵情報 */}
+        {/* 右側：敵 */}
         <Box width="50%" borderStyle="single" padding={1}>
-          <Text bold color="red">敵情報 (Wave {session.wave})</Text>
-          {session.currentMonster ? (
-            <Box flexDirection="column" marginTop={1}>
-              <Text color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}>
-                {session.currentMonster.name} Lv.{session.currentMonster.level}
-              </Text>
-              <HealthBar
-                current={session.currentMonster.currentHealth}
-                max={session.currentMonster.stats.maxHealth}
-                label="HP"
-                color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}
-                width={20}
-              />
-              <Box marginTop={1}>
-                <Text dimColor>撃破数: {session.defeatedCount}体</Text>
+          <Text bold underline color="red">敵 (Wave {session.wave})</Text>
+          <Box flexDirection="column" marginTop={1}>
+            {session.currentMonster ? (
+              <Box flexDirection="column">
+                <Box>
+                  <Text color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}>
+                    {session.currentMonster.name} Lv.{session.currentMonster.level}
+                  </Text>
+                </Box>
+                <Box>
+                  <HealthBar
+                    current={session.currentMonster.currentHealth}
+                    max={session.currentMonster.stats.maxHealth}
+                    label="HP"
+                    color={session.currentMonster.currentHealth > 0 ? "red" : "gray"}
+                    width={30}
+                  />
+                </Box>
+                {session.currentMonster.resourcePool && (
+                  <Box>
+                    {/* リソース表示（一行） */}
+                    {(() => {
+                      const pool = session.currentMonster.resourcePool;
+                      const resourceDisplay = [];
+                      if (pool.White > 0) resourceDisplay.push(<Text key="w" color="white">○{pool.White}</Text>);
+                      if (pool.Red > 0) resourceDisplay.push(<Text key="r" color="red">●{pool.Red}</Text>);
+                      if (pool.Blue > 0) resourceDisplay.push(<Text key="b" color="blue">●{pool.Blue}</Text>);
+                      if (pool.Green > 0) resourceDisplay.push(<Text key="g" color="green">●{pool.Green}</Text>);
+                      if (pool.Black > 0) resourceDisplay.push(<Text key="k" color="magenta">●{pool.Black}</Text>);
+                      
+                      return resourceDisplay.map((elem, idx) => (
+                        <React.Fragment key={idx}>
+                          {elem}
+                          {idx < resourceDisplay.length - 1 && <Text> </Text>}
+                        </React.Fragment>
+                      ));
+                    })()}
+                  </Box>
+                )}
               </Box>
-            </Box>
-          ) : (
-            <Text dimColor>敵がいません</Text>
-          )}
+            ) : (
+              <Text dimColor>敵がいません</Text>
+            )}
+          </Box>
         </Box>
       </Box>
 
-      {/* スキルクールダウンタイマー */}
-      {session.player.skills && session.player.skills.filter(s => s.type === "Active").length > 0 && (
-        <Box borderStyle="single" padding={1} marginBottom={1}>
-          <Text bold underline>アクティブスキル</Text>
-          <Box flexDirection="row" marginTop={1} flexWrap="wrap">
-            {(session.player.skills || [])
-              .filter(skill => skill.type === "Active")
-              .slice(0, 6)
-              .map((skill) => {
-              const cooldown = session.player.skillCooldowns?.get(skill.id) || 0;
-              const timer = session.player.skillTimers?.get(skill.id) || 0;
-              const isReady = cooldown === 0 && timer === 0;
-              
-              return (
-                <Box key={skill.id} marginRight={2} marginBottom={1}>
-                  <Text color={isReady ? "green" : "gray"}>
-                    {skill.name.substring(0, 8)}:
-                  </Text>
-                  <Text color={isReady ? "green" : "red"}>
-                    {isReady ? " Ready" : ` CD:${cooldown > 0 ? cooldown : timer}`}
-                  </Text>
-                </Box>
-              );
-            })}
-          </Box>
-        </Box>
-      )}
-
-      {/* 戦闘ログとログ詳細表示 */}
+      {/* 下部レイアウト：スキル（左）とログ（右） */}
       <Box flexDirection="row" flexGrow={1}>
-        {/* 左側：戦闘ログ */}
+        {/* 左側：スキル一覧 */}
+        <Box 
+          width="40%"
+          marginRight={1}
+          flexDirection="column"
+        >
+          {/* アクティブスキル */}
+          {session.player.skills && session.player.skills.filter(s => s.type === "Active" || s.type === "Basic").length > 0 && (
+            <Box borderStyle="single" padding={1} marginBottom={1}>
+              <Text bold underline>アクティブスキル</Text>
+              <Box flexDirection="column" marginTop={1}>
+                {/* Activeスキル */}
+                {(session.player.skills || [])
+                  .filter(skill => skill.type === "Active")
+                  .slice(0, 3)
+                  .map((skill) => {
+                  const cooldown = session.player.skillCooldowns?.get(skill.id) || 0;
+                  const timer = session.player.skillTimers?.get(skill.id) || 0;
+                  const isReady = cooldown === 0 && timer === 0;
+                  
+                  const resourceCostEntries = skill.resourceCost ? 
+                    Object.entries(skill.resourceCost)
+                      .filter(([_, amount]) => amount > 0)
+                      .map(([color, amount]) => ({
+                        color,
+                        symbol: color === 'White' ? '○' : '●',
+                        amount
+                      })) : [];
+                      
+                  const hasEnoughResources = !skill.resourceCost || 
+                    Object.entries(skill.resourceCost).every(([color, amount]) => 
+                      session.player.resourcePool[color as keyof typeof session.player.resourcePool] >= amount
+                    );
+                  
+                  const currentCooldown = cooldown > 0 ? cooldown : timer;
+                  let statusDisplay = "";
+                  let statusColor = "green";
+                  
+                  if (currentCooldown > 0) {
+                    statusDisplay = `[${currentCooldown}]`;
+                    statusColor = currentCooldown > 3 ? "red" : "yellow";
+                  } else if (!hasEnoughResources) {
+                    statusDisplay = "[×]";
+                    statusColor = "gray";
+                  }
+                  
+                  return (
+                    <Box key={skill.id} marginBottom={1}>
+                      <Box>
+                        <Text color={isReady && hasEnoughResources ? "green" : "gray"}>
+                          {skill.name}{skill.type === "Basic" ? "【基礎】" : ""}
+                        </Text>
+                        {statusDisplay && (
+                          <Text color={statusColor}> {statusDisplay}</Text>
+                        )}
+                        {resourceCostEntries.length > 0 && (
+                          <>
+                            <Text> </Text>
+                            {resourceCostEntries.map((cost, idx) => (
+                              <React.Fragment key={idx}>
+                                <Text color={cost.color.toLowerCase()}>
+                                  {cost.symbol}{cost.amount}
+                                </Text>
+                                {idx < resourceCostEntries.length - 1 && <Text> </Text>}
+                              </React.Fragment>
+                            ))}
+                          </>
+                        )}
+                      </Box>
+                      {skill.type === "Basic" && skill.resourceGeneration && (
+                        <Box>
+                          <Text dimColor>生成: </Text>
+                          {skill.resourceGeneration.map((gen, idx) => (
+                            <React.Fragment key={idx}>
+                              <Text color={gen.color === 'White' ? 'white' : gen.color.toLowerCase()}>
+                                {gen.color === 'White' ? '○' : '●'}+{gen.amount}
+                              </Text>
+                              <Text dimColor>({Math.round(gen.chance * 100)}%) </Text>
+                            </React.Fragment>
+                          ))}
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+                
+                {/* 基礎スキル（スペースを開ける） */}
+                {(session.player.skills || []).filter(skill => skill.type === "Basic").length > 0 && (
+                  <>
+                    <Box marginTop={1} marginBottom={1}>
+                      <Text dimColor>───────────────</Text>
+                    </Box>
+                    {(session.player.skills || [])
+                      .filter(skill => skill.type === "Basic")
+                      .map((skill) => {
+                      const cooldown = session.player.skillCooldowns?.get(skill.id) || 0;
+                      const timer = session.player.skillTimers?.get(skill.id) || 0;
+                      const isReady = cooldown === 0 && timer === 0;
+                      
+                      const resourceCostEntries = skill.resourceCost ? 
+                        Object.entries(skill.resourceCost)
+                          .filter(([_, amount]) => amount > 0)
+                          .map(([color, amount]) => ({
+                            color,
+                            symbol: color === 'White' ? '○' : '●',
+                            amount
+                          })) : [];
+                          
+                      const hasEnoughResources = !skill.resourceCost || 
+                        Object.entries(skill.resourceCost).every(([color, amount]) => 
+                          session.player.resourcePool[color as keyof typeof session.player.resourcePool] >= amount
+                        );
+                      
+                      const currentCooldown = cooldown > 0 ? cooldown : timer;
+                      let statusDisplay = "";
+                      let statusColor = "green";
+                      
+                      if (currentCooldown > 0) {
+                        statusDisplay = `[${currentCooldown}]`;
+                        statusColor = currentCooldown > 3 ? "red" : "yellow";
+                      } else if (!hasEnoughResources) {
+                        statusDisplay = "[×]";
+                        statusColor = "gray";
+                      }
+                      
+                      return (
+                        <Box key={skill.id} marginBottom={1}>
+                          <Box>
+                            <Text color={isReady && hasEnoughResources ? "green" : "gray"}>
+                              {skill.name}【基礎】
+                            </Text>
+                            {statusDisplay && (
+                              <Text color={statusColor}> {statusDisplay}</Text>
+                            )}
+                            {resourceCostEntries.length > 0 && (
+                              <>
+                                <Text> </Text>
+                                {resourceCostEntries.map((cost, idx) => (
+                                  <React.Fragment key={idx}>
+                                    <Text color={cost.color.toLowerCase()}>
+                                      {cost.symbol}{cost.amount}
+                                    </Text>
+                                    {idx < resourceCostEntries.length - 1 && <Text> </Text>}
+                                  </React.Fragment>
+                                ))}
+                              </>
+                            )}
+                          </Box>
+                          {skill.resourceGeneration && (
+                            <Box>
+                              <Text dimColor>生成: </Text>
+                              {skill.resourceGeneration.map((gen, idx) => (
+                                <React.Fragment key={idx}>
+                                  <Text color={gen.color === 'White' ? 'white' : gen.color.toLowerCase()}>
+                                    {gen.color === 'White' ? '○' : '●'}+{gen.amount}
+                                  </Text>
+                                  <Text dimColor>({Math.round(gen.chance * 100)}%) </Text>
+                                </React.Fragment>
+                              ))}
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </>
+                )}
+              </Box>
+            </Box>
+          )}
+          
+          {/* パッシブスキル */}
+          {session.player.skills && session.player.skills.filter(s => s.type === "Passive").length > 0 && (
+            <Box borderStyle="single" padding={1}>
+              <Text bold underline>パッシブスキル</Text>
+              <Box flexDirection="column" marginTop={1}>
+                {(session.player.skills || [])
+                  .filter(skill => skill.type === "Passive")
+                  .slice(0, 4)
+                  .map((skill) => (
+                    <Box key={skill.id} marginBottom={1}>
+                      <Text color="magenta">{skill.name}</Text>
+                      <Text dimColor wrap="wrap"> {skill.description}</Text>
+                    </Box>
+                  ))}
+              </Box>
+            </Box>
+          )}
+        </Box>
+        
+        {/* 右側：戦闘ログ */}
         <Box 
           borderStyle="single" 
           padding={1} 
-          width={showDetail ? "50%" : "100%"}
+          width={showDetail ? "40%" : "60%"}
           marginRight={showDetail ? 1 : 0}
           height={18}
         >
@@ -562,9 +772,9 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
           </Box>
         </Box>
         
-        {/* 右側：ログ詳細 */}
+        {/* 最右側：ログ詳細 */}
         {showDetail && getSelectedItem() && (
-          <Box borderStyle="round" padding={1} width="50%">
+          <Box borderStyle="round" padding={1} width="20%">
             <LogDetailView 
               event={getSelectedItem()!.event} 
               session={session}

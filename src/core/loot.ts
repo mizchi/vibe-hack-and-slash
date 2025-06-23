@@ -293,5 +293,29 @@ export const getItemStats = (item: Item): string[] => {
     }
   });
   
+  // 武器の場合、基礎スキル情報を追加
+  if (item.baseItem.type === "Weapon" && item.baseItem.tags) {
+    const weaponTag = item.baseItem.tags.find(tag => 
+      ["Sword", "Axe", "Staff", "Dagger", "Mace", "Bow", "Spear"].includes(tag)
+    );
+    
+    if (weaponTag) {
+      const basicSkillMap: Record<string, { name: string; resource: string }> = {
+        "Sword": { name: "剣撃", resource: "○+1(80%) ●+1(60%)" },
+        "Axe": { name: "斧撃", resource: "●+2(70%) ○+1(40%)" },
+        "Staff": { name: "魔力撃", resource: "●+2(70%) ○+1(40%)" },
+        "Dagger": { name: "短剣撃", resource: "●+2(70%) ○+1(40%)" },
+        "Mace": { name: "鈍撃", resource: "○+1(80%) ●+1(60%)" },
+      };
+      
+      const skillInfo = basicSkillMap[weaponTag];
+      if (skillInfo) {
+        stats.push("");
+        stats.push(`基礎スキル: ${skillInfo.name}`);
+        stats.push(`リソース生成: ${skillInfo.resource}`);
+      }
+    }
+  }
+  
   return stats;
 };

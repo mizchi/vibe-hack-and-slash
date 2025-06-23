@@ -1,0 +1,207 @@
+{
+  "$schema": "../schemas/prefixes.schema.json",
+  "prefixes": [
+    {
+      "id": "mighty",
+      "name": "剛力の",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "brutal",
+      "name": "凶暴な",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 8
+        },
+        {
+          "type": "IncreaseDamage",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "brilliant",
+      "name": "輝ける",
+      "modifiers": [
+        {
+          "type": "IncreaseIntelligence",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "arcane",
+      "name": "神秘の",
+      "modifiers": [
+        {
+          "type": "IncreaseIntelligence",
+          "value": 8
+        },
+        {
+          "type": "SkillPower",
+          "percentage": 10
+        }
+      ]
+    },
+    {
+      "id": "swift",
+      "name": "迅速な",
+      "modifiers": [
+        {
+          "type": "IncreaseDexterity",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "precise",
+      "name": "精密な",
+      "modifiers": [
+        {
+          "type": "IncreaseDexterity",
+          "value": 8
+        },
+        {
+          "type": "CriticalChance",
+          "percentage": 5
+        }
+      ]
+    },
+    {
+      "id": "sturdy",
+      "name": "頑丈な",
+      "modifiers": [
+        {
+          "type": "IncreaseVitality",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "fortified",
+      "name": "強化された",
+      "modifiers": [
+        {
+          "type": "IncreaseVitality",
+          "value": 8
+        },
+        {
+          "type": "IncreaseHealth",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "balanced",
+      "name": "調和の",
+      "modifiers": [
+        {
+          "type": "IncreaseStrength",
+          "value": 3
+        },
+        {
+          "type": "IncreaseIntelligence",
+          "value": 3
+        },
+        {
+          "type": "IncreaseDexterity",
+          "value": 3
+        },
+        {
+          "type": "IncreaseVitality",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "flaming",
+      "name": "炎の",
+      "modifiers": [
+        {
+          "type": "ElementModifier",
+          "element": "Fire",
+          "multiplier": 1.2
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Fire",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "sparking",
+      "name": "電撃の",
+      "modifiers": [
+        {
+          "type": "ElementModifier",
+          "element": "Lightning",
+          "multiplier": 1.2
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Lightning",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "blessed",
+      "name": "祝福された",
+      "modifiers": [
+        {
+          "type": "ElementModifier",
+          "element": "Holy",
+          "multiplier": 1.2
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Holy",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "mystic",
+      "name": "神秘的な",
+      "modifiers": [
+        {
+          "type": "ElementModifier",
+          "element": "Arcane",
+          "multiplier": 1.2
+        },
+        {
+          "type": "ElementResistance",
+          "element": "Arcane",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "vampiric",
+      "name": "吸血の",
+      "modifiers": [
+        {
+          "type": "LifeSteal",
+          "percentage": 5
+        }
+      ]
+    },
+    {
+      "id": "sharp",
+      "name": "鋭利な",
+      "modifiers": [
+        {
+          "type": "CriticalDamage",
+          "multiplier": 1.3
+        }
+      ]
+    }
+  ]
+}

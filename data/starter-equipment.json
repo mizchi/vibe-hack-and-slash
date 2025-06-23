@@ -2,12 +2,8 @@
   "$schema": "../schemas/starter-equipment.schema.json",
   "Warrior": [
     {
-      "baseItemId": "sword_basic",
+      "baseItemId": "axe_basic",
       "slot": "MainHand"
-    },
-    {
-      "baseItemId": "shield_basic",
-      "slot": "OffHand"
     },
     {
       "baseItemId": "chainmail",

@@ -30,9 +30,41 @@ import type {
 } from "./types.ts";
 import { playerAttack, monsterAttack, applyExperience } from "./combat.ts";
 import { rollLoot } from "./loot.ts";
-import { getAvailableSkills, applySkillEffects, regenerateMana, tickCooldowns, updateSkillTimers } from "./skills.ts";
+import { getAvailableSkills, applySkillEffects, tickCooldowns, updateSkillTimers } from "./skills.ts";
 import { TIER_MODIFIERS } from "./loot-modifiers.ts";
 import { calculateTotalStats } from "./damage.ts";
+
+// クラス別の基礎リソース生成率（武器によるリソース生成に変更のため最小限に）
+const CLASS_RESOURCE_GENERATION = {
+  Warrior: {
+    White: 0 as any,
+    Red: 0 as any,
+    Blue: 0 as any,
+    Green: 0 as any,
+    Black: 0 as any,
+  },
+  Mage: {
+    White: 0 as any,
+    Red: 0 as any,
+    Blue: 0 as any,
+    Green: 0 as any,
+    Black: 0 as any,
+  },
+  Rogue: {
+    White: 0 as any,
+    Red: 0 as any,
+    Blue: 0 as any,
+    Green: 0 as any,
+    Black: 0 as any,
+  },
+  Paladin: {
+    White: 0 as any,
+    Red: 0 as any,
+    Blue: 0 as any,
+    Green: 0 as any,
+    Black: 0 as any,
+  },
+};
 
 // クラス別の初期ステータス
 const CLASS_BASE_STATS = {
@@ -42,8 +74,6 @@ const CLASS_BASE_STATS = {
     criticalChance: 0.1,
     criticalDamage: 1.5,
     lifeSteal: 0,
-    maxMana: 30 as Mana,
-    manaRegen: 5,
     skillPower: 5,
   },
   Mage: {
@@ -52,8 +82,6 @@ const CLASS_BASE_STATS = {
     criticalChance: 0.15,
     criticalDamage: 2.0,
     lifeSteal: 0,
-    maxMana: 100 as Mana,
-    manaRegen: 15,
     skillPower: 20,
   },
   Rogue: {
@@ -62,8 +90,6 @@ const CLASS_BASE_STATS = {
     criticalChance: 0.25,
     criticalDamage: 2.5,
     lifeSteal: 0.05,
-    maxMana: 50 as Mana,
-    manaRegen: 8,
     skillPower: 10,
   },
   Paladin: {
@@ -72,8 +98,6 @@ const CLASS_BASE_STATS = {
     criticalChance: 0.1,
     criticalDamage: 1.5,
     lifeSteal: 0.02,
-    maxMana: 60 as Mana,
-    manaRegen: 10,
     skillPower: 15,
   },
 };
@@ -127,7 +151,6 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
     level: 1 as Level,
     experience: 0 as Experience,
     currentHealth: baseStats.maxHealth,
-    currentMana: baseStats.maxMana,
     baseStats,
     baseAttributes,
     equipment: new Map(),
@@ -138,6 +161,13 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
     activeBuffs: [], // 空のバフリスト
     elementResistance: { ...INITIAL_ELEMENT_RESISTANCE },
     gold: 100 as Gold, // 初期ゴールド
+    resourcePool: {
+      White: 3 as any,  // 初期リソースを付与
+      Red: 0 as any,
+      Blue: 0 as any,
+      Green: 0 as any,
+      Black: 0 as any,
+    },
   };
 };
 
@@ -188,6 +218,15 @@ export const spawnMonster = (
   const maxHealth = (baseHealth + monsterLevel * 10) as Health;
   
   
+  // モンスター用の初期リソースプール
+  const monsterResourcePool: ResourcePool = {
+    White: 2 as any,
+    Red: 0 as any,
+    Blue: 0 as any,
+    Green: 0 as any,
+    Black: 0 as any,
+  };
+  
   return {
     id: `${template.id}_${Date.now()}` as MonsterId,
     name: template.name,
@@ -200,12 +239,13 @@ export const spawnMonster = (
       criticalChance: template.baseStats?.criticalChance || 0.05,
       criticalDamage: template.baseStats?.criticalDamage || 1.5,
       lifeSteal: template.baseStats?.lifeSteal || 0,
-      maxMana: 0 as Mana,
-      manaRegen: 0,
       skillPower: 0,
     },
     elementResistance: template.elementResistance || defaultResistance,
     lootTable: template.lootTable || [],
+    resourcePool: monsterResourcePool,
+    skills: [],
+    skillCooldowns: new Map(),
   };
 };
 
@@ -214,6 +254,43 @@ export type TurnResult = {
   events: BattleEvent[];
   updatedSession: Session;
   droppedItems?: Item[];
+};
+
+// リソース生成
+const generateResources = (player: Player, random: () => number = Math.random): Player => {
+  const newResourcePool = { ...player.resourcePool };
+  const generation = CLASS_RESOURCE_GENERATION[player.class];
+  
+  // クラス基礎リソースを追加
+  (Object.keys(generation) as ResourceColor[]).forEach(color => {
+    newResourcePool[color] = (newResourcePool[color] + generation[color]) as any;
+  });
+  
+  return {
+    ...player,
+    resourcePool: newResourcePool,
+  };
+};
+
+// リソース消費チェック
+const canAffordResource = (player: Player, cost: ResourcePool): boolean => {
+  return (Object.keys(cost) as ResourceColor[]).every(color => 
+    player.resourcePool[color] >= cost[color]
+  );
+};
+
+// リソース消費
+const consumeResources = (player: Player, cost: ResourcePool): Player => {
+  const newResourcePool = { ...player.resourcePool };
+  
+  (Object.keys(cost) as ResourceColor[]).forEach(color => {
+    newResourcePool[color] = (newResourcePool[color] - cost[color]) as any;
+  });
+  
+  return {
+    ...player,
+    resourcePool: newResourcePool,
+  };
 };
 
 export const processBattleTurn = async (
@@ -237,12 +314,8 @@ export const processBattleTurn = async (
     currentMonster = spawnMonster(monsterTemplates, currentPlayer.level, random);
   }
   
-  // マナ回復
-  const { player: playerWithMana, manaRegenerated } = regenerateMana(currentPlayer);
-  currentPlayer = playerWithMana;
-  if (manaRegenerated > 0) {
-    events.push({ type: "ManaRegenerated", amount: manaRegenerated });
-  }
+  // リソース生成（毎ターン）
+  currentPlayer = generateResources(currentPlayer, random);
   
   // クールダウン減少
   currentPlayer = tickCooldowns(currentPlayer);
@@ -254,15 +327,22 @@ export const processBattleTurn = async (
   const lastEvent = events[events.length - 1];
   const availableSkills = getAvailableSkills(currentPlayer, currentMonster, lastEvent, turn);
   
+  // 各ターン1つのスキルのみ発動可能
+  let skillUsed = false;
+  
   // 最優先スキルを使用
-  if (availableSkills.length > 0 && currentMonster.currentHealth > 0) {
+  if (availableSkills.length > 0 && currentMonster.currentHealth > 0 && !skillUsed) {
     const skillResult = applySkillEffects(availableSkills[0], currentPlayer, currentMonster, random);
     events.push(...skillResult.events);
     currentPlayer = skillResult.updatedPlayer;
     if (skillResult.updatedMonster) {
       currentMonster = skillResult.updatedMonster;
     }
-  } else if (currentMonster.currentHealth > 0) {
+    skillUsed = true;
+  }
+  
+  // スキルを使わなかった場合は通常攻撃（基礎スキルは除く）
+  if (!skillUsed && currentMonster.currentHealth > 0) {
     // 通常攻撃（スキルを使わなかった場合）
     const playerAttackResult = playerAttack(currentPlayer, currentMonster, random);
     if (!playerAttackResult.ok) return playerAttackResult;
@@ -374,11 +454,10 @@ export const processAction = (
       
       // MainHandに武器を装備した場合
       if (slot === "MainHand" && item.baseItem.tags) {
-        // 既存の武器スキルを削除（クラス専用スキルは保持）
+        // 既存の武器スキルを削除（クラス専用スキルとパッシブスキルは保持）
         newSkills = newSkills.filter(skill => 
-          !skill.requiredWeaponTags || 
-          skill.requiredWeaponTags.length === 0 ||
-          (skill.requiredClass && skill.requiredClass.includes(session.player.class))
+          (!skill.requiredWeaponTags || skill.requiredWeaponTags.length === 0) ||
+          (skill.requiredClass && skill.requiredClass.includes(session.player.class) && skill.type === "Passive")
         );
         
         // 新しい武器に対応するスキルを追加

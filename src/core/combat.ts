@@ -145,6 +145,24 @@ export const monsterAttack = (
     events.push({ type: "PlayerDefeated" });
   }
   
+  // Rageパッシブスキルのチェック（Warriorがダメージを受けた時）
+  if (player.class === "Warrior" && finalDamage > 0) {
+    const rageSkill = player.skills.find(s => s.id === "warrior_rage");
+    if (rageSkill && random() < 0.5) { // 50%の確率
+      // 赤リソースを1増加
+      const newResourcePool = { ...updatedPlayer.resourcePool };
+      newResourcePool.Red = Math.min(5, newResourcePool.Red + 1) as any; // 上限5
+      updatedPlayer.resourcePool = newResourcePool;
+      
+      // パッシブスキル発動イベントを追加
+      events.push({
+        type: "PassiveTriggered",
+        skillName: "怒り（Rage）",
+        effect: "赤リソース+1"
+      });
+    }
+  }
+  
   return Ok({ events, updatedPlayer });
 };
 

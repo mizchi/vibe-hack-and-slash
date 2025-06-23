@@ -1,8 +1,7 @@
 {
   "$schema": "../schemas/class-skills.schema.json",
   "Warrior": [
-    "sword_slash",
-    "warrior_training"
+    "warrior_rage"
   ],
   "Mage": [
     "fireball",

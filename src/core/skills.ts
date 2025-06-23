@@ -11,6 +11,8 @@ import type {
   Mana,
   CharacterStats,
   ElementType,
+  ResourceColor,
+  ResourcePool,
 } from "./types.ts";
 import { calculateTotalStats, calculateSkillDamage } from "./damage.ts";
 
@@ -35,8 +37,8 @@ export const checkSkillTriggerConditions = (
         return healthPercent < condition.percentage;
         
       case "ManaAbove":
-        const manaPercent = context.player.currentMana / calculateTotalStats(context.player).maxMana;
-        return manaPercent >= condition.percentage;
+        // マナシステムは削除されたため、常にfalse
+        return false;
         
       case "EnemyHealthBelow":
         if (!context.monster) return false;
@@ -67,15 +69,21 @@ export const getAvailableSkills = (
 ): Skill[] => {
   const playerStats = calculateTotalStats(player);
   
-  // デバッグ: プレイヤーのスキルをログ出力
-  if (turn === 1) {
-    console.log("Player skills:", player.skills.map(s => ({ id: s.id, type: s.type, requiredWeaponTags: s.requiredWeaponTags })));
-  }
-  
   return player.skills
     .filter(skill => {
-      // マナチェック
-      if (player.currentMana < skill.manaCost) return false;
+      // パッシブスキルは使用対象から除外（効果は常に有効）
+      if (skill.type === "Passive") return false;
+      
+      // スキルタイプによるチェック
+      if (skill.type === "Active" || skill.type === "Basic") {
+        // アクティブスキルと基礎スキルはリソースコストをチェック
+        if (skill.resourceCost) {
+          const canAfford = (Object.keys(skill.resourceCost) as ResourceColor[]).every(color => 
+            player.resourcePool[color] >= skill.resourceCost![color]
+          );
+          if (!canAfford) return false;
+        }
+      }
       
       // クールダウンチェック
       const cooldown = player.skillCooldowns.get(skill.id) || 0;
@@ -148,13 +156,31 @@ export const applySkillEffects = (
   
   const playerStats = calculateTotalStats(currentPlayer);
   
-  // マナ消費
-  currentPlayer.currentMana = Math.max(0, currentPlayer.currentMana - skill.manaCost) as Mana;
+  // リソース消費（基礎スキルとアクティブスキル）
+  if ((skill.type === "Basic" || skill.type === "Active") && skill.resourceCost) {
+    const newResourcePool = { ...currentPlayer.resourcePool };
+    (Object.keys(skill.resourceCost) as ResourceColor[]).forEach(color => {
+      newResourcePool[color] = (newResourcePool[color] - skill.resourceCost![color]) as any;
+    });
+    currentPlayer.resourcePool = newResourcePool;
+  }
+  
+  // リソース生成（基礎スキルの場合）
+  if (skill.type === "Basic" && skill.resourceGeneration) {
+    const newResourcePool = { ...currentPlayer.resourcePool };
+    skill.resourceGeneration.forEach(gen => {
+      if (random() < gen.chance) {
+        newResourcePool[gen.color] = (newResourcePool[gen.color] + gen.amount) as any;
+      }
+    });
+    currentPlayer.resourcePool = newResourcePool;
+  }
+  
   events.push({
     type: "SkillUsed",
     skillId: skill.id,
     skillName: skill.name,
-    manaCost: skill.manaCost,
+    manaCost: 0 as Mana, // MPシステム削除
   });
   
   // クールダウン設定
@@ -273,26 +299,6 @@ export const applySkillEffects = (
     events,
     updatedPlayer: currentPlayer,
     updatedMonster: currentMonster,
-  };
-};
-
-// マナ回復
-export const regenerateMana = (
-  player: Player
-): { player: Player; manaRegenerated: Mana } => {
-  const stats = calculateTotalStats(player);
-  const regenAmount = Math.floor(stats.manaRegen) as Mana;
-  const actualRegen = Math.min(
-    regenAmount,
-    stats.maxMana - player.currentMana
-  ) as Mana;
-  
-  return {
-    player: {
-      ...player,
-      currentMana: (player.currentMana + actualRegen) as Mana,
-    },
-    manaRegenerated: actualRegen,
   };
 };
 

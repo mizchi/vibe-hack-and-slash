@@ -36,6 +36,8 @@ export const Game: React.FC = () => {
     // 職業別のスキルを取得
     const classSkillIds = classSkillsData[playerClass] || [];
     const classSkills = skillsData.skills.filter(skill => {
+      // 基礎攻撃スキルは武器から付与されるため、ここでは付与しない
+      
       // クラス専用スキル
       if (classSkillIds.includes(skill.id)) {
         return true;
@@ -43,6 +45,10 @@ export const Game: React.FC = () => {
       // クラス制限がある場合、該当クラスかチェック
       if (skill.requiredClass && skill.requiredClass.length > 0) {
         return skill.requiredClass.includes(playerClass);
+      }
+      // パッシブスキルで該当クラスのものを自動付与
+      if (skill.type === "Passive" && skill.requiredClass && skill.requiredClass.includes(playerClass)) {
+        return true;
       }
       // クラス制限がない基本スキルは含めない（クラス専用スキルのみ）
       return false;
@@ -54,6 +60,8 @@ export const Game: React.FC = () => {
     
     // 初期装備を付与
     const starterEquipment = starterEquipmentData[playerClass] || [];
+    let updatedSkills = [...player.skills]; // スキルリストのコピーを作成
+    
     starterEquipment.forEach(({ baseItemId, slot }) => {
       const baseItem = baseItems.get(baseItemId as ItemId);
       if (baseItem) {
@@ -64,8 +72,41 @@ export const Game: React.FC = () => {
           level: 1 as Level
         };
         player.equipment.set(slot as EquipmentSlot, item);
+        
+        // MainHandに武器を装備した場合、対応するスキルを追加
+        if (slot === "MainHand" && baseItem.tags) {
+          // 武器に対応するスキルを取得
+          const weaponSkills = (skillsData.skills as Skill[]).filter(skill => {
+            // 武器タグ要求があるスキル
+            if (skill.requiredWeaponTags && skill.requiredWeaponTags.length > 0) {
+              // 武器のタグがスキルの要求タグを満たすか
+              const hasRequiredTag = skill.requiredWeaponTags.some(tag => 
+                baseItem.tags.includes(tag)
+              );
+              if (!hasRequiredTag) return false;
+              
+              // クラス制限がある場合、プレイヤーのクラスが一致するか
+              if (skill.requiredClass && skill.requiredClass.length > 0) {
+                return skill.requiredClass.includes(playerClass);
+              }
+              
+              return true;
+            }
+            return false;
+          });
+          
+          // 武器スキルを追加（重複を避ける）
+          weaponSkills.forEach(weaponSkill => {
+            if (!updatedSkills.some(s => s.id === weaponSkill.id)) {
+              updatedSkills.push(weaponSkill);
+            }
+          });
+        }
       }
     });
+    
+    // スキルリストを更新したプレイヤーを作成
+    player.skills = updatedSkills;
     
     const newSession = createSession("session1" as SessionId, player);
     setSession(newSession);
