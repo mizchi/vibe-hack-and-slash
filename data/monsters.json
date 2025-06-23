@@ -4,10 +4,11 @@
     {
       "id": "goblin",
       "name": "Goblin",
+      "tier": "Common",
       "levelRange": { "min": 1, "max": 3 },
       "baseStats": {
         "health": 30,
-        "damage": 3,
+        "baseDamage": 3,
         "defense": 0,
         "criticalChance": 0.05,
         "criticalDamage": 1.5,
@@ -15,16 +16,15 @@
       },
       "elementResistance": {
         "Physical": 0,
+        "Arcane": -10,
         "Fire": -20,
-        "Ice": 0,
         "Lightning": 0,
-        "Holy": -10,
-        "Dark": 10
+        "Holy": -10
       },
       "lootTable": [
         {
           "baseItemId": "sword_basic",
-          "dropChance": 0.9,
+          "dropChance": 0.27,
           "rarityWeights": {
             "common": 40,
             "magic": 40,
@@ -34,7 +34,7 @@
         },
         {
           "baseItemId": "armor_cloth",
-          "dropChance": 0.95,
+          "dropChance": 0.285,
           "rarityWeights": {
             "common": 45,
             "magic": 35,
@@ -44,7 +44,7 @@
         },
         {
           "baseItemId": "ring_basic",
-          "dropChance": 0.4,
+          "dropChance": 0.12,
           "rarityWeights": {
             "common": 50,
             "magic": 30,
@@ -54,7 +54,7 @@
         },
         {
           "baseItemId": "boots_basic",
-          "dropChance": 0.3,
+          "dropChance": 0.09,
           "rarityWeights": {
             "common": 75,
             "magic": 20,
@@ -67,19 +67,27 @@
     {
       "id": "orc",
       "name": "Orc Warrior",
+      "tier": "Common",
       "levelRange": { "min": 3, "max": 6 },
       "baseStats": {
         "health": 60,
-        "damage": 8,
+        "baseDamage": 8,
         "defense": 5,
         "criticalChance": 0.1,
         "criticalDamage": 1.75,
         "lifeSteal": 0
       },
+      "elementResistance": {
+        "Physical": 10,
+        "Arcane": -10,
+        "Fire": 0,
+        "Lightning": -10,
+        "Holy": 0
+      },
       "lootTable": [
         {
           "baseItemId": "axe_basic",
-          "dropChance": 1.0,
+          "dropChance": 0.3,
           "rarityWeights": {
             "common": 50,
             "magic": 35,
@@ -89,7 +97,7 @@
         },
         {
           "baseItemId": "armor_leather",
-          "dropChance": 1.0,
+          "dropChance": 0.3,
           "rarityWeights": {
             "common": 55,
             "magic": 30,
@@ -99,7 +107,7 @@
         },
         {
           "baseItemId": "ring_basic",
-          "dropChance": 0.5,
+          "dropChance": 0.15,
           "rarityWeights": {
             "common": 40,
             "magic": 40,
@@ -109,7 +117,7 @@
         },
         {
           "baseItemId": "amulet_health",
-          "dropChance": 0.4,
+          "dropChance": 0.12,
           "rarityWeights": {
             "common": 50,
             "magic": 35,
@@ -122,19 +130,27 @@
     {
       "id": "skeleton",
       "name": "Skeleton Knight",
+      "tier": "Elite",
       "levelRange": { "min": 5, "max": 8 },
       "baseStats": {
         "health": 80,
-        "damage": 10,
+        "baseDamage": 10,
         "defense": 10,
         "criticalChance": 0.15,
         "criticalDamage": 2.0,
         "lifeSteal": 0
       },
+      "elementResistance": {
+        "Physical": 20,
+        "Arcane": -20,
+        "Fire": -30,
+        "Lightning": 0,
+        "Holy": -50
+      },
       "lootTable": [
         {
           "baseItemId": "sword_advanced",
-          "dropChance": 1.0,
+          "dropChance": 0.5,
           "rarityWeights": {
             "common": 40,
             "magic": 40,
@@ -144,7 +160,7 @@
         },
         {
           "baseItemId": "armor_chain",
-          "dropChance": 1.0,
+          "dropChance": 0.5,
           "rarityWeights": {
             "common": 45,
             "magic": 35,
@@ -154,7 +170,7 @@
         },
         {
           "baseItemId": "amulet_health",
-          "dropChance": 0.9,
+          "dropChance": 0.45,
           "rarityWeights": {
             "common": 30,
             "magic": 45,
@@ -164,7 +180,7 @@
         },
         {
           "baseItemId": "ring_vampire",
-          "dropChance": 0.4,
+          "dropChance": 0.2,
           "rarityWeights": {
             "common": 40,
             "magic": 40,
@@ -177,19 +193,27 @@
     {
       "id": "vampire",
       "name": "Vampire Lord",
+      "tier": "Elite",
       "levelRange": { "min": 8, "max": 12 },
       "baseStats": {
         "health": 120,
-        "damage": 14,
+        "baseDamage": 14,
         "defense": 15,
         "criticalChance": 0.2,
         "criticalDamage": 2.5,
         "lifeSteal": 0.2
       },
+      "elementResistance": {
+        "Physical": 10,
+        "Arcane": 30,
+        "Fire": -20,
+        "Lightning": 10,
+        "Holy": -60
+      },
       "lootTable": [
         {
           "baseItemId": "dagger_basic",
-          "dropChance": 0.25,
+          "dropChance": 0.125,
           "rarityWeights": {
             "common": 30,
             "magic": 40,
@@ -199,12 +223,201 @@
         },
         {
           "baseItemId": "ring_vampire",
-          "dropChance": 0.3,
+          "dropChance": 0.15,
           "rarityWeights": {
             "common": 20,
             "magic": 40,
             "rare": 30,
             "legendary": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "dark_wizard",
+      "name": "Dark Wizard",
+      "tier": "Elite",
+      "levelRange": { "min": 8, "max": 12 },
+      "baseStats": {
+        "health": 100,
+        "baseDamage": 15,
+        "defense": 5,
+        "criticalChance": 0.2,
+        "criticalDamage": 2.5,
+        "lifeSteal": 0
+      },
+      "elementResistance": {
+        "Physical": -10,
+        "Arcane": 60,
+        "Fire": 20,
+        "Lightning": 20,
+        "Holy": -30
+      },
+      "lootTable": [
+        {
+          "baseItemId": "staff_basic",
+          "dropChance": 0.6,
+          "rarityWeights": {
+            "common": 20,
+            "magic": 45,
+            "rare": 25,
+            "legendary": 10
+          }
+        },
+        {
+          "baseItemId": "robe",
+          "dropChance": 0.5,
+          "rarityWeights": {
+            "common": 25,
+            "magic": 40,
+            "rare": 25,
+            "legendary": 10
+          }
+        },
+        {
+          "baseItemId": "amulet_basic",
+          "dropChance": 0.3,
+          "rarityWeights": {
+            "common": 15,
+            "magic": 40,
+            "rare": 30,
+            "legendary": 15
+          }
+        }
+      ]
+    },
+    {
+      "id": "demon",
+      "name": "Lesser Demon",
+      "tier": "Rare",
+      "levelRange": { "min": 12, "max": 16 },
+      "baseStats": {
+        "health": 200,
+        "baseDamage": 25,
+        "defense": 15,
+        "criticalChance": 0.25,
+        "criticalDamage": 2.5,
+        "lifeSteal": 0.1
+      },
+      "elementResistance": {
+        "Physical": 20,
+        "Arcane": 40,
+        "Fire": 50,
+        "Lightning": 10,
+        "Holy": -50
+      },
+      "lootTable": [
+        {
+          "baseItemId": "sword_advanced",
+          "dropChance": 0.8,
+          "rarityWeights": {
+            "common": 10,
+            "magic": 35,
+            "rare": 40,
+            "legendary": 15
+          }
+        },
+        {
+          "baseItemId": "armor_chain",
+          "dropChance": 0.8,
+          "rarityWeights": {
+            "common": 10,
+            "magic": 30,
+            "rare": 40,
+            "legendary": 20
+          }
+        },
+        {
+          "baseItemId": "ring_vampire",
+          "dropChance": 0.5,
+          "rarityWeights": {
+            "common": 5,
+            "magic": 25,
+            "rare": 45,
+            "legendary": 25
+          }
+        },
+        {
+          "baseItemId": "amulet_basic",
+          "dropChance": 0.6,
+          "rarityWeights": {
+            "common": 5,
+            "magic": 20,
+            "rare": 45,
+            "legendary": 30
+          }
+        }
+      ]
+    },
+    {
+      "id": "dragon",
+      "name": "Ancient Dragon",
+      "tier": "Boss",
+      "levelRange": { "min": 18, "max": 25 },
+      "baseStats": {
+        "health": 500,
+        "baseDamage": 40,
+        "defense": 25,
+        "criticalChance": 0.3,
+        "criticalDamage": 3.0,
+        "lifeSteal": 0.15
+      },
+      "elementResistance": {
+        "Physical": 30,
+        "Arcane": 20,
+        "Fire": 80,
+        "Lightning": 20,
+        "Holy": 0
+      },
+      "lootTable": [
+        {
+          "baseItemId": "sword_advanced",
+          "dropChance": 1.0,
+          "rarityWeights": {
+            "common": 0,
+            "magic": 20,
+            "rare": 50,
+            "legendary": 30
+          }
+        },
+        {
+          "baseItemId": "armor_chain",
+          "dropChance": 1.0,
+          "rarityWeights": {
+            "common": 0,
+            "magic": 15,
+            "rare": 50,
+            "legendary": 35
+          }
+        },
+        {
+          "baseItemId": "ring_vampire",
+          "dropChance": 0.8,
+          "rarityWeights": {
+            "common": 0,
+            "magic": 10,
+            "rare": 50,
+            "legendary": 40
+          }
+        },
+        {
+          "baseItemId": "amulet_basic",
+          "dropChance": 0.8,
+          "rarityWeights": {
+            "common": 0,
+            "magic": 10,
+            "rare": 45,
+            "legendary": 45
+          }
+        },
+        {
+          "baseItemId": "belt_basic",
+          "dropChance": 0.6,
+          "rarityWeights": {
+            "common": 0,
+            "magic": 5,
+            "rare": 40,
+            "legendary": 55
           }
         }
       ]

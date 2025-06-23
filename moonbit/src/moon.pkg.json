@@ -1,0 +1,16 @@
+{
+  "link": {
+    "js": {
+      "exports": [
+        "create_new_player",
+        "generate_item_for_js",
+        "get_item_name_js",
+        "get_item_stats_js",
+        "calculate_damage_for_js",
+        "test_connection",
+        "get_version"
+      ],
+      "format": "esm"
+    }
+  }
+}

@@ -38,15 +38,19 @@ export type Vitality = Brand<number, "Vitality">;  // VIT: HP、防御力
 // 属性タイプ
 export type ElementType = 
   | "Physical"  // 物理
+  | "Arcane"    // 神秘
   | "Fire"      // 火
-  | "Ice"       // 氷  
   | "Lightning" // 雷
-  | "Holy"      // 聖
-  | "Dark";     // 闇
+  | "Holy";     // 聖
 
 // 属性耐性
 export type ElementResistance = {
   [key in ElementType]: number; // 0-100% (負の値は弱点)
+};
+
+// 属性修正（装備によるダメージ倍率）
+export type ElementModifier = {
+  [key in ElementType]: number; // デフォルト1.0
 };
 
 // プレイヤータイプ
@@ -125,7 +129,7 @@ export type ItemModifier =
   | { type: "IncreaseDexterity"; value: number }
   | { type: "IncreaseVitality"; value: number }
   | { type: "ElementResistance"; element: ElementType; value: number }
-  | { type: "ElementDamage"; element: ElementType; percentage: number };
+  | { type: "ElementModifier"; element: ElementType; multiplier: number }; // 属性ダメージ倍率
 
 export type ItemType = "Weapon" | "Armor" | "Accessory";
 
@@ -145,7 +149,8 @@ export type BaseItem = {
   requiredLevel?: Level; // 装備レベル制限
   requiredClass?: PlayerClass[]; // 装備可能なクラス
   weaponScaling?: WeaponScaling; // 武器の場合のスケーリング
-  elementType?: ElementType; // 武器の属性
+  elementModifiers?: ElementModifier; // 属性ダメージ倍率
+  weaponSkillId?: SkillId; // 武器固有スキル
 };
 
 export type Item = {
@@ -160,8 +165,7 @@ export type Item = {
 // キャラクター
 export type CharacterStats = {
   maxHealth: Health;
-  damage: Damage;
-  defense: number;
+  baseDamage: Damage; // 基礎ダメージ
   criticalChance: number;
   criticalDamage: number;
   lifeSteal: number;
@@ -178,8 +182,18 @@ export type BaseStats = {
   vitality: Vitality;
 };
 
+// バフ/デバフシステム
+export type Buff = {
+  id: string;
+  name: string;
+  stat: keyof CharacterStats;
+  value: number;
+  duration: number; // 残りターン数
+};
+
 export type Player = {
   id: PlayerId;
+  name: string;
   class: PlayerClass;
   level: Level;
   experience: Experience;
@@ -188,17 +202,23 @@ export type Player = {
   baseStats: CharacterStats;
   baseAttributes: BaseStats; // STR/INT/DEX/VIT
   equipment: Map<EquipmentSlot, Item>; // スロットごとの装備
+  inventory: Item[]; // インベントリ
   skills: Skill[];
   skillCooldowns: Map<SkillId, number>; // 残りクールダウンターン
   skillTimers: Map<SkillId, number>; // スキル自動発動タイマー
+  activeBuffs: Buff[]; // アクティブなバフ
   elementResistance: ElementResistance; // 属性耐性
   gold: Gold;
 };
+
+// モンスターティア
+export type MonsterTier = "Common" | "Elite" | "Rare" | "Boss" | "Legendary";
 
 // モンスター
 export type Monster = {
   id: MonsterId;
   name: string;
+  tier: MonsterTier;
   level: Level;
   currentHealth: Health;
   stats: CharacterStats;

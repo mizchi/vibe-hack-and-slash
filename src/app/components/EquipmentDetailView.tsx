@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import type { Session, Item, EquipmentSlot, Gold, Skill, ItemId } from "../../core/types.ts";
 import { processAction } from "../../core/session.ts";
 import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
-import { calculateTotalStats } from "../../core/combat.ts";
+import { calculateTotalStats } from "../../core/damage.ts";
 import { getValidSlotsForItem } from "../../core/equipment.ts";
 import { calculateStatChanges } from "../utils/stat-preview.ts";
 import { calculateItemValue, formatGold } from "../../core/item-value.ts";
@@ -24,29 +24,8 @@ type Props = {
   };
 };
 
-const CompactBattleStatus: React.FC<{ battleStatus: Props["battleStatus"] }> = ({ battleStatus }) => {
-  if (!battleStatus.isInBattle) {
-    return (
-      <Box borderStyle="single" padding={1}>
-        <Text color="green">[拠点 - 安全]</Text>
-      </Box>
-    );
-  }
-
-  return (
-    <Box borderStyle="single" padding={1}>
-      <Text color="red">[戦闘中] </Text>
-      {battleStatus.currentMonster && (
-        <Text>
-          {battleStatus.currentMonster.name} Lv.{battleStatus.currentMonster.level} 
-          (HP: {battleStatus.currentMonster.healthPercent}%)
-        </Text>
-      )}
-    </Box>
-  );
-};
-
 type InventoryTab = "recent" | "weapon" | "armor" | "accessory" | "all";
+type DetailTab = "item" | "equipment" | "status";
 
 export const EquipmentDetailView: React.FC<Props> = ({
   session,
@@ -59,6 +38,7 @@ export const EquipmentDetailView: React.FC<Props> = ({
   const [inventoryPage, setInventoryPage] = useState(0);
   const [inventoryTab, setInventoryTab] = useState<InventoryTab>("recent");
   const [recentItems, setRecentItems] = useState<Set<ItemId>>(new Set());
+  const [detailTab, setDetailTab] = useState<DetailTab>("equipment");
 
   const ITEMS_PER_PAGE = 20;
   const playerStats = calculateTotalStats(session.player);
@@ -113,6 +93,15 @@ export const EquipmentDetailView: React.FC<Props> = ({
   useInput((input, key) => {
     // Tab キーは親コンポーネントで処理するのでスキップ
     if (key.tab) {
+      return;
+    }
+    
+    // Q キーで詳細タブ切り替え
+    if (input.toLowerCase() === 'q') {
+      const tabs: DetailTab[] = ["item", "equipment", "status"];
+      const currentIndex = tabs.indexOf(detailTab);
+      const nextIndex = (currentIndex + 1) % tabs.length;
+      setDetailTab(tabs[nextIndex]);
       return;
     }
     
@@ -221,11 +210,6 @@ export const EquipmentDetailView: React.FC<Props> = ({
 
   return (
     <Box flexDirection="column" height="100%">
-      {/* 簡易戦闘状況 */}
-      <Box marginBottom={1}>
-        <CompactBattleStatus battleStatus={battleStatus} />
-      </Box>
-
       {/* メインコンテンツ - 左右2分割 */}
       <Box flexDirection="row" height={32}>
         {/* 左側：インベントリ */}
@@ -308,8 +292,25 @@ export const EquipmentDetailView: React.FC<Props> = ({
         
         {/* 右側：詳細情報 */}
         <Box width="50%" flexDirection="column">
-          {/* アイテム詳細 */}
-          <Box borderStyle="round" padding={1} marginBottom={1} height={10}>
+          {/* タブ表示 */}
+          <Box marginBottom={1}>
+            <Text color={detailTab === "item" ? "cyan" : "gray"} bold={detailTab === "item"}>
+              [アイテム詳細]
+            </Text>
+            <Text> </Text>
+            <Text color={detailTab === "equipment" ? "cyan" : "gray"} bold={detailTab === "equipment"}>
+              [装備比較]
+            </Text>
+            <Text> </Text>
+            <Text color={detailTab === "status" ? "cyan" : "gray"} bold={detailTab === "status"}>
+              [ステータス]
+            </Text>
+            <Text dimColor> (Q: 切替)</Text>
+          </Box>
+
+          {/* タブコンテンツ */}
+          {detailTab === "item" && (
+            <Box borderStyle="round" padding={1} height={28}>
             {currentPageItems[selectedItemIndex] ? (
               <Box flexDirection="column">
                 <Text bold underline>アイテム詳細</Text>
@@ -323,16 +324,20 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   };
                   return (
                     <>
-                      <Text color={rarityColors[item.rarity]} bold marginTop={1}>
-                        {getItemDisplayName(item)}
-                      </Text>
+                      <Box marginTop={1}>
+                        <Text color={rarityColors[item.rarity]} bold>
+                          {getItemDisplayName(item)}
+                        </Text>
+                      </Box>
                       <Text dimColor>{item.rarity} {item.baseItem.type}</Text>
                       <Box flexDirection="column" marginTop={1}>
                         {getItemStats(item).map((stat, i) => (
                           <Text key={i}>{stat}</Text>
                         ))}
                       </Box>
-                      <Text color="yellow" marginTop={1}>売却価値: {formatGold(calculateItemValue(item))} G</Text>
+                      <Box marginTop={1}>
+                        <Text color="yellow">売却価値: {formatGold(calculateItemValue(item))} G</Text>
+                      </Box>
                     </>
                   );
                 })()}
@@ -341,16 +346,23 @@ export const EquipmentDetailView: React.FC<Props> = ({
               <Text dimColor>アイテムを選択してください</Text>
             )}
           </Box>
+          )}
 
-          {/* 装備変更プレビュー */}
-          <Box borderStyle="round" padding={1} marginBottom={1} height={8}>
+          {detailTab === "equipment" && (
+            <Box borderStyle="round" padding={1} height={28}>
             {(currentPageItems[selectedItemIndex] && 
               getValidSlotsForItem(currentPageItems[selectedItemIndex], session.player.class, session.player.level).length > 0) ? (
               <>
-                <Text bold>装備変更プレビュー</Text>
+                <Text bold underline>装備比較</Text>
                 {(() => {
                 const item = currentPageItems[selectedItemIndex];
                 const validSlots = getValidSlotsForItem(item, session.player.class, session.player.level);
+                const rarityColors = {
+                  Common: "gray",
+                  Magic: "blue", 
+                  Rare: "yellow",
+                  Legendary: "magenta",
+                };
                 // 常に自動でスロットを決定
                 let targetSlot = validSlots[0];
                 const itemType = item.baseItem.type;
@@ -378,20 +390,111 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   return <Text color={color}> → {stat.new} ({sign}{stat.diff})</Text>;
                 };
                 
+                const currentItem = session.player.equipment.get(targetSlot);
+                
                 return (
                   <Box flexDirection="column" marginTop={1}>
-                    <Text dimColor>スロット: {targetSlot}</Text>
-                    {changes.attack.diff !== 0 && (
-                      <Text>攻撃: {changes.attack.current}{formatChange(changes.attack)}</Text>
-                    )}
-                    {changes.defense.diff !== 0 && (
-                      <Text>防御: {changes.defense.current}{formatChange(changes.defense)}</Text>
-                    )}
-                    {changes.health.diff !== 0 && (
-                      <Text>HP: {changes.health.current}{formatChange(changes.health)}</Text>
-                    )}
-                    {changes.mana.diff !== 0 && (
-                      <Text>MP: {changes.mana.current}{formatChange(changes.mana)}</Text>
+                    <Text dimColor>対象スロット: {targetSlot}</Text>
+                    
+                    {/* 現在装備 */}
+                    <Box marginTop={1}>
+                      <Text bold>現在装備:</Text>
+                      {currentItem ? (
+                        <Box flexDirection="column" marginLeft={2}>
+                          <Text color={rarityColors[currentItem.rarity]}>
+                            {getItemDisplayName(currentItem)}
+                          </Text>
+                          {getItemStats(currentItem).map((stat, i) => (
+                            <Text key={i} dimColor>{stat}</Text>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Box marginLeft={2}><Text dimColor>なし</Text></Box>
+                      )}
+                    </Box>
+                    
+                    {/* 新アイテム */}
+                    <Box marginTop={1}>
+                      <Text bold>新アイテム:</Text>
+                      <Box flexDirection="column" marginLeft={2}>
+                        <Text color={rarityColors[item.rarity]}>
+                          {getItemDisplayName(item)}
+                        </Text>
+                        {getItemStats(item).map((stat, i) => (
+                          <Text key={i} dimColor>{stat}</Text>
+                        ))}
+                      </Box>
+                    </Box>
+                    
+                    {/* ステータス変化 */}
+                    <Box marginTop={1}>
+                      <Text bold>ステータス変化:</Text>
+                      <Box flexDirection="column" marginLeft={2}>
+                        {changes.attack.diff !== 0 && (
+                          <Text>攻撃力: {changes.attack.current}{formatChange(changes.attack)}</Text>
+                        )}
+                        {changes.health.diff !== 0 && (
+                          <Text>HP: {changes.health.current}{formatChange(changes.health)}</Text>
+                        )}
+                        {changes.mana.diff !== 0 && (
+                          <Text>MP: {changes.mana.current}{formatChange(changes.mana)}</Text>
+                        )}
+                        {changes.attack.diff === 0 && changes.health.diff === 0 && changes.mana.diff === 0 && (
+                          <Text dimColor>変化なし</Text>
+                        )}
+                      </Box>
+                    </Box>
+                    
+                    {/* スキルダメージ予測 */}
+                    {session.player.skills.filter(s => s.type === "Active").length > 0 && (
+                      <Box marginTop={1}>
+                        <Text bold>スキルダメージ予測:</Text>
+                        <Box flexDirection="column" marginLeft={2}>
+                          {session.player.skills
+                            .filter(skill => skill.type === "Active")
+                            .slice(0, 3)
+                            .map(skill => {
+                              const damageEffect = skill.effects.find(e => e.type === "Damage");
+                              if (!damageEffect || damageEffect.type !== "Damage") return null;
+                              
+                              // 現在の装備でのダメージ
+                              const currentDamage = calculateSkillDamage(
+                                session.player,
+                                damageEffect.baseDamage,
+                                damageEffect.scaling,
+                                damageEffect.element || "Physical"
+                              );
+                              
+                              // 新装備でのダメージ（仮装備）
+                              const tempPlayer = {
+                                ...session.player,
+                                equipment: new Map(session.player.equipment)
+                              };
+                              tempPlayer.equipment.set(targetSlot, item);
+                              
+                              const newDamage = calculateSkillDamage(
+                                tempPlayer,
+                                damageEffect.baseDamage,
+                                damageEffect.scaling,
+                                damageEffect.element || "Physical"
+                              );
+                              
+                              const diff = newDamage - currentDamage;
+                              
+                              return (
+                                <Box key={skill.id}>
+                                  <Text>{skill.name}: {currentDamage}</Text>
+                                  {diff !== 0 && (
+                                    <Text color={diff > 0 ? "green" : "red"}>
+                                      {" "}→ {newDamage} ({diff > 0 ? "+" : ""}{diff})
+                                    </Text>
+                                  )}
+                                </Box>
+                              );
+                            })
+                            .filter(Boolean)}
+                        </Box>
+                      </Box>
                     )}
                   </Box>
                 );
@@ -401,9 +504,11 @@ export const EquipmentDetailView: React.FC<Props> = ({
               <Text dimColor>装備可能なアイテムがありません</Text>
             )}
           </Box>
+          )}
           
-          {/* 現在のステータス */}
-          <Box borderStyle="single" padding={1} marginBottom={1} height={7}>
+          {detailTab === "status" && (
+            <Box borderStyle="round" padding={1} height={28}>
+              <Box flexDirection="column">
             <Text bold underline>ステータス</Text>
             <Box marginTop={1} flexDirection="column">
               {/* 基本ステータス */}
@@ -419,15 +524,14 @@ export const EquipmentDetailView: React.FC<Props> = ({
                 })()}
               </Box>
               {/* 戦闘ステータス */}
-              <Text color="green">攻撃力: {playerStats.damage}</Text>
-              <Text color="cyan">防御力: {playerStats.defense}</Text>
+              <Text color="green">基礎ダメージ: {playerStats.baseDamage}</Text>
+              <Text color="cyan">VIT: {session.player.baseAttributes.vitality}</Text>
               <Text color="red">体力: {playerStats.maxHealth}</Text>
               <Text color="blue">魔力: {playerStats.maxMana}</Text>
             </Box>
-          </Box>
-          
-          {/* スキルダメージプレビュー */}
-          <Box borderStyle="single" padding={1} height={6}>
+            
+            {/* スキルダメージプレビュー */}
+            <Box marginTop={2}>
             {session.player.skills.length > 0 ? (
               <>
                 <Text bold underline>スキル予測ダメージ</Text>
@@ -445,11 +549,10 @@ export const EquipmentDetailView: React.FC<Props> = ({
                   
                   const elementColors = {
                     Physical: "white",
+                    Arcane: "blue",
                     Fire: "red",
-                    Ice: "cyan",
                     Lightning: "yellow",
                     Holy: "white",
-                    Dark: "magenta",
                   };
                   
                   return (
@@ -466,13 +569,15 @@ export const EquipmentDetailView: React.FC<Props> = ({
             ) : (
               <Text dimColor>スキルなし</Text>
             )}
-          </Box>
-          
-          {/* 装備中アイテム */}
-          <Box borderStyle="single" padding={1} height={6}>
+            </Box>
+            
+            {/* 装備中アイテム */}
+            <Box marginTop={2}>
             <Text bold underline>装備中</Text>
             {session.player.equipment.size === 0 ? (
-              <Text dimColor marginTop={1}>装備なし</Text>
+              <Box marginTop={1}>
+                <Text dimColor>装備なし</Text>
+              </Box>
             ) : (
               <Box flexDirection="column" marginTop={1}>
                 {Array.from(session.player.equipment.entries()).map(([slot, item]) => {
@@ -505,14 +610,17 @@ export const EquipmentDetailView: React.FC<Props> = ({
                 })}
               </Box>
             )}
+            </Box>
           </Box>
+          </Box>
+          )}
         </Box>
       </Box>
 
       {/* 操作説明 */}
       <Box marginTop={1}>
         <Text dimColor>
-          ↑↓: アイテム | ←→: タブ切替 | Enter: 装備 | Del: 売却
+          ↑↓: アイテム | ←→: タブ切替 | Q: 詳細切替 | Enter: 装備 | Del: 売却
         </Text>
       </Box>
     </Box>

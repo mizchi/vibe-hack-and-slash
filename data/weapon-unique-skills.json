@@ -1,0 +1,195 @@
+{
+  "$schema": "../schemas/skills.schema.json",
+  "skills": [
+    {
+      "id": "sword_basic_skill",
+      "name": "剣の舞",
+      "description": "基本的な剣による連続攻撃",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 2,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 20,
+          "scaling": 1.0,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 6,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "sword_basic"
+    },
+    {
+      "id": "sword_master_skill",
+      "name": "剣聖の一撃",
+      "description": "上級剣技による強力な一撃",
+      "type": "Active",
+      "manaCost": 30,
+      "cooldown": 4,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 50,
+          "scaling": 1.5,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 8,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "sword_advanced",
+      "guaranteedCritical": true
+    },
+    {
+      "id": "axe_whirlwind",
+      "name": "旋風斬",
+      "description": "斧を振り回して周囲の敵を攻撃",
+      "type": "Active",
+      "manaCost": 25,
+      "cooldown": 3,
+      "targetType": "All",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 30,
+          "scaling": 1.2,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "axe_basic"
+    },
+    {
+      "id": "arcane_blast",
+      "name": "アーケインブラスト",
+      "description": "杖から放つ純粋な魔力の爆発",
+      "type": "Active",
+      "manaCost": 20,
+      "cooldown": 2,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 35,
+          "scaling": 1.0,
+          "element": "Arcane"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "staff_basic"
+    },
+    {
+      "id": "shadow_strike_weapon",
+      "name": "暗殺の一撃",
+      "description": "ダガーによる急所への攻撃",
+      "type": "Active",
+      "manaCost": 15,
+      "cooldown": 2,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 25,
+          "scaling": 1.3,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 8,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "dagger",
+      "guaranteedCritical": true
+    },
+    {
+      "id": "holy_smite",
+      "name": "聖なる打撃",
+      "description": "メイスに聖なる力を込めて打ち下ろす",
+      "type": "Active",
+      "manaCost": 20,
+      "cooldown": 3,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 30,
+          "scaling": 1.1,
+          "element": "Holy"
+        },
+        {
+          "type": "Stun",
+          "duration": 1
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "mace_basic"
+    },
+    {
+      "id": "piercing_thrust",
+      "name": "貫通突き",
+      "description": "槍による防御無視の一撃",
+      "type": "Active",
+      "manaCost": 18,
+      "cooldown": 2,
+      "targetType": "Enemy",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 28,
+          "scaling": 1.2,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 7,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "spear_basic"
+    },
+    {
+      "id": "arrow_volley",
+      "name": "矢の雨",
+      "description": "弓から多数の矢を放つ",
+      "type": "Active",
+      "manaCost": 22,
+      "cooldown": 3,
+      "targetType": "All",
+      "effects": [
+        {
+          "type": "Damage",
+          "baseDamage": 20,
+          "scaling": 1.0,
+          "element": "Physical"
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 6,
+      "isWeaponSkill": true,
+      "requiredWeaponId": "bow_basic"
+    }
+  ]
+}

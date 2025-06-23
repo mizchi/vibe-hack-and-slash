@@ -3,7 +3,7 @@ import { Box, Text, useInput } from "ink";
 import type { Session, Item, BattleEvent, BaseItem, ItemId, Skill, EquipmentSlot } from "../../core/types.ts";
 import { processBattleTurn, processAction } from "../../core/session.ts";
 import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
-import { calculateTotalStats } from "../../core/combat.ts";
+import { calculateTotalStats } from "../../core/damage.ts";
 import { canEquipItem, getValidSlotsForItem } from "../../core/equipment.ts";
 import { calculateStatChanges } from "../utils/stat-preview.ts";
 import { calculateItemValue, formatGold } from "../../core/item-value.ts";
@@ -25,8 +25,12 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
   color,
   width = 20,
 }) => {
-  const percentage = Math.round((current / max) * 100);
-  const filled = Math.round((current / max) * width);
+  // NaNチェック
+  const safeMax = isNaN(max) || max <= 0 ? 1 : max;
+  const safeCurrent = isNaN(current) ? 0 : Math.max(0, Math.min(current, safeMax));
+  
+  const percentage = Math.round((safeCurrent / safeMax) * 100);
+  const filled = Math.round((safeCurrent / safeMax) * width);
   const empty = width - filled;
 
   return (
@@ -34,7 +38,7 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
       <Text color={color}>{label}: </Text>
       <Text color={color}>{"█".repeat(filled)}</Text>
       <Text dimColor>{"░".repeat(empty)}</Text>
-      <Text> {percentage}%</Text>
+      <Text> {safeCurrent}/{safeMax} ({percentage}%)</Text>
     </Box>
   );
 };
@@ -44,16 +48,20 @@ const CompactHealthBar: React.FC<{ current: number; max: number; color: string }
   max,
   color,
 }) => {
-  const percentage = Math.round((current / max) * 100);
+  // NaNチェック
+  const safeMax = isNaN(max) || max <= 0 ? 1 : max;
+  const safeCurrent = isNaN(current) ? 0 : Math.max(0, Math.min(current, safeMax));
+  
+  const percentage = Math.round((safeCurrent / safeMax) * 100);
   const width = 10;
-  const filled = Math.round((current / max) * width);
+  const filled = Math.round((safeCurrent / safeMax) * width);
   const empty = width - filled;
 
   return (
     <Box>
       <Text color={color}>{"█".repeat(filled)}</Text>
       <Text dimColor>{"░".repeat(empty)}</Text>
-      <Text> {current}/{max}</Text>
+      <Text> {safeCurrent}/{safeMax}</Text>
     </Box>
   );
 };
@@ -187,8 +195,8 @@ export const GamePlayView: React.FC<Props> = ({
   useEffect(() => {
     if (!session || !isInBattle || isPaused || session.state === "Completed") return;
 
-    const timer = setTimeout(() => {
-      const result = processBattleTurn(
+    const timer = setTimeout(async () => {
+      const result = await processBattleTurn(
         session, 
         baseItems, 
         monsterTemplates,
@@ -546,7 +554,9 @@ export const GamePlayView: React.FC<Props> = ({
             {totalPages > 1 && <Text dimColor>[{inventoryPage + 1}/{totalPages}]</Text>}
           </Box>
           {inventory.length === 0 ? (
-            <Text dimColor marginTop={1}>アイテムなし</Text>
+            <Box marginTop={1}>
+              <Text dimColor>アイテムなし</Text>
+            </Box>
           ) : (
             <Box flexDirection="column" marginTop={1}>
               {currentPageItems.map((item, index) => {
@@ -597,8 +607,8 @@ export const GamePlayView: React.FC<Props> = ({
           
           {/* 現在のステータス */}
           <Box marginTop={1}>
-            <Text color="green">⚔ 攻撃力: {playerStats.damage}</Text>
-            <Text color="cyan">🛡 防御力: {playerStats.defense}</Text>
+            <Text color="green">⚔ 基礎ダメージ: {playerStats.baseDamage}</Text>
+            <Text color="cyan">🛡 VIT: {session.player.baseAttributes.vitality}</Text>
             <Text color="red">❤️  体力: {playerStats.maxHealth}</Text>
             <Text color="blue">🔮 魔力: {playerStats.maxMana}</Text>
           </Box>
@@ -630,9 +640,7 @@ export const GamePlayView: React.FC<Props> = ({
                     {changes.attack.diff !== 0 && (
                       <Text>⚔ 攻撃: {changes.attack.current}{formatChange(changes.attack)}</Text>
                     )}
-                    {changes.defense.diff !== 0 && (
-                      <Text>🛡 防御: {changes.defense.current}{formatChange(changes.defense)}</Text>
-                    )}
+                    {/* 防御力は属性耐性として表示される */}
                     {changes.health.diff !== 0 && (
                       <Text>❤️  HP: {changes.health.current}{formatChange(changes.health)}</Text>
                     )}

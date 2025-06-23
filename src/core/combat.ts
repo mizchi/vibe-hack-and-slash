@@ -12,132 +12,76 @@ import type {
   Item,
   ElementType,
 } from "./types.ts";
-import { calculateTotalAttributes, calculateAttackDamage } from "./damage.ts";
+import { 
+  calculateTotalAttributes, 
+  calculateTotalStats, 
+  calculatePhysicalDamage, 
+  calculateElementalDamage,
+  calculateTotalElementModifiers,
+  calculateBaseDamageFromStats
+} from "./damage.ts";
 
-// ステータス計算（属性の影響を含む）
-export const calculateTotalStats = (player: Player): CharacterStats => {
-  const base = { ...player.baseStats };
-  const totalAttributes = calculateTotalAttributes(player);
-  
-  // 属性によるステータス補正
-  // VIT: HP +5/point, DEF +0.5/point
-  base.maxHealth = (base.maxHealth + totalAttributes.vitality * 5) as Health;
-  base.defense = base.defense + Math.floor(totalAttributes.vitality * 0.5);
-  
-  // INT: MP +3/point, ManaRegen +0.2/point
-  base.maxMana = (base.maxMana + totalAttributes.intelligence * 3) as Mana;
-  base.manaRegen = base.manaRegen + Math.floor(totalAttributes.intelligence * 0.2);
-  
-  // DEX: CritChance +0.5%/point, CritDmg +1%/point
-  base.criticalChance = Math.min(0.75, base.criticalChance + totalAttributes.dexterity * 0.005);
-  base.criticalDamage = base.criticalDamage + totalAttributes.dexterity * 0.01;
-  
-  // Map から装備アイテムを取得
-  player.equipment.forEach((item) => {
-    if (!item) return;
-    
-    const allModifiers = [
-      ...(item.baseItem.baseModifiers || []),
-      ...(item.prefix?.modifiers || []),
-      ...(item.suffix?.modifiers || []),
-      ...(item.modifiers || [])
-    ];
-    
-    allModifiers.forEach((mod) => {
-      switch (mod.type) {
-        case "IncreaseDamage":
-          base.damage = (base.damage + mod.value) as Damage;
-          break;
-        case "IncreaseHealth":
-          base.maxHealth = (base.maxHealth + mod.value) as Health;
-          break;
-        case "IncreaseDefense":
-          base.defense += mod.value;
-          break;
-        case "LifeSteal":
-          base.lifeSteal += mod.percentage;
-          break;
-        case "CriticalChance":
-          base.criticalChance = Math.min(0.75, base.criticalChance + mod.percentage);
-          break;
-        case "CriticalDamage":
-          base.criticalDamage += mod.multiplier;
-          break;
-        case "IncreaseMana":
-          base.maxMana = (base.maxMana + mod.value) as Mana;
-          break;
-        case "ManaRegen":
-          base.manaRegen += mod.value;
-          break;
-        case "SkillPower":
-          base.skillPower += mod.percentage;
-          break;
-      }
-    });
-  });
-  
-  return base;
-};
-
-// ダメージ計算
-export const calculateDamage = (
-  attacker: CharacterStats,
-  defender: CharacterStats,
-  random: () => number = Math.random
-): { damage: Damage; isCritical: boolean } => {
-  const baseDamage = attacker.damage;
-  const defense = defender.defense;
-  
-  // クリティカル判定
-  const isCritical = random() < attacker.criticalChance;
-  const critMultiplier = isCritical ? attacker.criticalDamage : 1;
-  
-  // ダメージ計算（防御力で軽減）
-  const damage = Math.max(
-    1,
-    Math.floor((baseDamage * critMultiplier * (100 / (100 + defense))) * (0.9 + random() * 0.2))
-  ) as Damage;
-  
-  return { damage, isCritical };
-};
-
-// プレイヤー攻撃
+// プレイヤー攻撃（属性システム対応）
 export const playerAttack = (
   player: Player,
   monster: Monster,
   random: () => number = Math.random
 ): Result<{ events: BattleEvent[]; updatedMonster: Monster }, GameError> => {
-  const playerStats = calculateTotalStats(player);
+  const events: BattleEvent[] = [];
+  
+  // 物理ダメージを計算（武器の属性修正込み）
+  const { damage: baseDamage, element } = calculatePhysicalDamage(player);
   
   // クリティカル判定
+  const playerStats = calculateTotalStats(player);
   const isCritical = random() < playerStats.criticalChance;
+  const criticalMultiplier = isCritical ? playerStats.criticalDamage : 1;
   
-  // 新しいダメージ計算システムを使用
-  const { damage, element } = calculateAttackDamage(player, monster, isCritical);
+  // クリティカルダメージ適用
+  const criticalDamage = Math.floor(baseDamage * criticalMultiplier);
   
-  const newHealth = Math.max(0, monster.currentHealth - damage) as Health;
-  const updatedMonster: Monster = {
-    ...monster,
-    currentHealth: newHealth,
-  };
+  // 属性修正を取得
+  const elementModifiers = calculateTotalElementModifiers(player);
+  const attackerModifier = elementModifiers[element];
   
-  const events: BattleEvent[] = [
-    { type: "PlayerAttack", damage, isCritical }
-  ];
+  // 属性耐性によるダメージ計算
+  const finalDamage = calculateElementalDamage(
+    criticalDamage,
+    element,
+    monster.elementResistance,
+    attackerModifier
+  ) as Damage;
+  
+  // ダメージ適用
+  const newHealth = Math.max(0, monster.currentHealth - finalDamage) as Health;
+  const updatedMonster = { ...monster, currentHealth: newHealth };
+  
+  // イベント生成
+  events.push({
+    type: "PlayerAttack",
+    damage: finalDamage,
+    isCritical,
+    targetId: monster.id,
+    targetName: monster.name,
+  });
   
   // ライフスティール
-  if (playerStats.lifeSteal > 0) {
-    const healAmount = Math.floor(damage * playerStats.lifeSteal) as Health;
-    events.push({ type: "PlayerHeal", amount: healAmount });
+  if (playerStats.lifeSteal > 0 && finalDamage > 0) {
+    const healAmount = Math.floor(finalDamage * playerStats.lifeSteal) as Health;
+    if (healAmount > 0) {
+      events.push({ type: "PlayerHeal", amount: healAmount });
+    }
   }
   
-  // モンスター撃破
+  // モンスター撃破判定
   if (newHealth === 0) {
-    const experience = (monster.level * 10) as Experience;
+    const baseExp = monster.level * 10 + 20;
+    const expGain = Math.floor(baseExp * (0.8 + random() * 0.4)) as Experience;
     events.push({
       type: "MonsterDefeated",
       monsterId: monster.id,
-      experience,
+      monsterName: monster.name,
+      experience: expGain,
     });
   }
   
@@ -150,19 +94,53 @@ export const monsterAttack = (
   player: Player,
   random: () => number = Math.random
 ): Result<{ events: BattleEvent[]; updatedPlayer: Player }, GameError> => {
+  const events: BattleEvent[] = [];
   const playerStats = calculateTotalStats(player);
-  const { damage } = calculateDamage(monster.stats, playerStats, random);
   
-  const newHealth = Math.max(0, player.currentHealth - damage) as Health;
-  const updatedPlayer: Player = {
-    ...player,
-    currentHealth: newHealth,
-  };
+  // モンスターの基礎ダメージ
+  const baseDamage = monster.stats.baseDamage;
   
-  const events: BattleEvent[] = [
-    { type: "MonsterAttack", damage }
-  ];
+  // クリティカル判定
+  const isCritical = random() < monster.stats.criticalChance;
+  const criticalMultiplier = isCritical ? monster.stats.criticalDamage : 1;
+  const criticalDamage = Math.floor(baseDamage * criticalMultiplier);
   
+  // モンスターは物理攻撃として扱う（将来的に属性を持たせることも可能）
+  const element: ElementType = "Physical";
+  
+  // プレイヤーの属性耐性を計算（装備から）
+  const playerResistance = { ...player.elementResistance };
+  for (const [, item] of player.equipment) {
+    if (item.baseItem.elementModifiers) {
+      // 装備の属性修正値を耐性として扱う（1.0より大きい = 耐性、小さい = 弱点）
+      for (const [elem, modifier] of Object.entries(item.baseItem.elementModifiers)) {
+        const resistanceBonus = (1 - modifier) * 20; // 修正値0.8なら+20%耐性
+        playerResistance[elem as ElementType] += resistanceBonus;
+      }
+    }
+  }
+  
+  // 属性耐性によるダメージ計算
+  const finalDamage = calculateElementalDamage(
+    criticalDamage,
+    element,
+    playerResistance,
+    1.0
+  ) as Damage;
+  
+  // ダメージ適用
+  const newHealth = Math.max(0, player.currentHealth - finalDamage) as Health;
+  const updatedPlayer = { ...player, currentHealth: newHealth };
+  
+  // イベント生成
+  events.push({
+    type: "MonsterAttack",
+    damage: finalDamage,
+    attackerId: monster.id,
+    attackerName: monster.name,
+  });
+  
+  // プレイヤー敗北判定
   if (newHealth === 0) {
     events.push({ type: "PlayerDefeated" });
   }
@@ -170,36 +148,34 @@ export const monsterAttack = (
   return Ok({ events, updatedPlayer });
 };
 
-// 経験値とレベルアップ
+// 経験値付与
 export const applyExperience = (
   player: Player,
   experience: Experience
 ): { player: Player; leveledUp: boolean } => {
-  const newExp = (player.experience + experience) as Experience;
+  const newExperience = (player.experience + experience) as Experience;
   const expForNextLevel = (player.level * 100) as Experience;
   
-  if (newExp >= expForNextLevel) {
-    return {
-      player: {
-        ...player,
-        level: (player.level + 1) as Level,
-        experience: (newExp - expForNextLevel) as Experience,
-        baseStats: {
-          ...player.baseStats,
-          maxHealth: (player.baseStats.maxHealth + 10) as Health,
-          damage: (player.baseStats.damage + 2) as Damage,
-          maxMana: (player.baseStats.maxMana + 5) as Mana,
-          manaRegen: player.baseStats.manaRegen + 1,
-        },
-        currentHealth: (player.currentHealth + 10) as Health,
-        currentMana: (player.currentMana + 5) as Mana,
-      },
-      leveledUp: true,
+  if (newExperience >= expForNextLevel) {
+    // レベルアップ
+    const newLevel = (player.level + 1) as Level;
+    const remainingExp = (newExperience - expForNextLevel) as Experience;
+    
+    // ステータス上昇（レベルアップ時に自動的に属性値が上がる）
+    const leveledPlayer = {
+      ...player,
+      level: newLevel,
+      experience: remainingExp,
+      // HP/MP全回復
+      currentHealth: calculateTotalStats(player).maxHealth,
+      currentMana: calculateTotalStats(player).maxMana,
     };
+    
+    return { player: leveledPlayer, leveledUp: true };
   }
   
   return {
-    player: { ...player, experience: newExp },
+    player: { ...player, experience: newExperience },
     leveledUp: false,
   };
 };

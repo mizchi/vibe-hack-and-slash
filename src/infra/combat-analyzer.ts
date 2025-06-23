@@ -1,6 +1,6 @@
 import type { LogEntry, GameSnapshot } from "../core/engine.ts";
 import type { BattleEvent, Item, CharacterStats } from "../core/types.ts";
-import { calculateTotalStats } from "../core/combat.ts";
+import { calculateTotalStats } from "../core/damage.ts";
 
 // 戦闘緊張感の評価指標
 export type TensionMetrics = {
@@ -134,9 +134,20 @@ export class CombatAnalyzer {
       
       // 装備変更の検出
       let changed = false;
-      if (prevEquip.weapon?.id !== currEquip.weapon?.id) changed = true;
-      if (prevEquip.armor?.id !== currEquip.armor?.id) changed = true;
-      if (prevEquip.accessory?.id !== currEquip.accessory?.id) changed = true;
+      // Mapを使ったequipmentの比較
+      const prevItems = Array.from(prevEquip.values());
+      const currItems = Array.from(currEquip.values());
+      
+      if (prevItems.length !== currItems.length) {
+        changed = true;
+      } else {
+        for (let j = 0; j < prevItems.length; j++) {
+          if (prevItems[j]?.id !== currItems[j]?.id) {
+            changed = true;
+            break;
+          }
+        }
+      }
       
       if (changed) {
         equipmentChanges++;
@@ -145,12 +156,10 @@ export class CombatAnalyzer {
         const prevStats = calculateTotalStats(prevSnapshot.session.player);
         const currStats = calculateTotalStats(currSnapshot.session.player);
         
-        const statChange: Partial<CharacterStats> = {
-          damage: currStats.damage - prevStats.damage,
+        const statChange = {
+          baseDamage: currStats.baseDamage - prevStats.baseDamage,
           maxHealth: currStats.maxHealth - prevStats.maxHealth,
-          defense: currStats.defense - prevStats.defense,
           criticalChance: currStats.criticalChance - prevStats.criticalChance,
-          skillPower: currStats.skillPower - prevStats.skillPower,
         };
         
         // 影響度の計算
@@ -199,7 +208,7 @@ export class CombatAnalyzer {
     const totalTurns = this.logs.length;
     const phases = [];
     const difficultyProgression = [];
-    const powerSpikes = [];
+    const powerSpikes: number[] = [];
     
     // フェーズ分割
     const earlyPhaseEnd = Math.floor(totalTurns * 0.3);
@@ -329,25 +338,19 @@ export class CombatAnalyzer {
 
   // ステータス変化の影響度計算
   private calculateStatChangeImpact(
-    change: Partial<CharacterStats>,
+    change: { baseDamage?: number; maxHealth?: number; criticalChance?: number },
     baseStats: CharacterStats
   ): number {
     let impact = 0;
     
-    if (change.damage) {
-      impact += Math.abs(change.damage / baseStats.damage) * 30;
+    if (change.baseDamage) {
+      impact += Math.abs(change.baseDamage / baseStats.baseDamage) * 30;
     }
     if (change.maxHealth) {
       impact += Math.abs(change.maxHealth / baseStats.maxHealth) * 25;
     }
-    if (change.defense) {
-      impact += Math.abs(change.defense / (baseStats.defense + 1)) * 20;
-    }
     if (change.criticalChance) {
       impact += Math.abs(change.criticalChance / (baseStats.criticalChance + 0.1)) * 15;
-    }
-    if (change.skillPower) {
-      impact += Math.abs(change.skillPower / (baseStats.skillPower + 1)) * 10;
     }
     
     return Math.min(100, impact);
@@ -355,11 +358,10 @@ export class CombatAnalyzer {
 
   // 戦闘力成長率
   private calculatePowerGrowth(firstStats: CharacterStats, lastStats: CharacterStats): number {
-    const damagePower = lastStats.damage / firstStats.damage;
+    const damagePower = lastStats.baseDamage / firstStats.baseDamage;
     const healthPower = lastStats.maxHealth / firstStats.maxHealth;
-    const defensePower = (lastStats.defense + 1) / (firstStats.defense + 1);
     
-    return (damagePower + healthPower + defensePower) / 3 - 1;
+    return (damagePower + healthPower) / 2 - 1;
   }
 
   // ビルド多様性

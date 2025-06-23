@@ -2,23 +2,18 @@
   "$schema": "../schemas/class-skills.schema.json",
   "Warrior": [
     "sword_slash",
-    "berserker_rage",
-    "shield_bash"
+    "warrior_training"
   ],
   "Mage": [
     "fireball",
-    "magic_burst",
-    "mana_shield",
     "arcane_intellect"
   ],
   "Rogue": [
-    "dagger_stab",
     "shadow_strike",
-    "evasion"
+    "nimble_fingers"
   ],
   "Paladin": [
-    "mace_smash",
     "holy_light",
-    "divine_shield"
+    "divine_blessing"
   ]
 }

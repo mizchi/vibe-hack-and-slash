@@ -1,5 +1,6 @@
 import type {
   Skill,
+  SkillId,
   SkillEffect,
   SkillTriggerCondition,
   Player,
@@ -11,8 +12,7 @@ import type {
   CharacterStats,
   ElementType,
 } from "./types.ts";
-import { calculateTotalStats } from "./combat.ts";
-import { calculateSkillDamage } from "./damage.ts";
+import { calculateTotalStats, calculateSkillDamage } from "./damage.ts";
 
 // スキル発動条件チェック
 export const checkSkillTriggerConditions = (
@@ -66,6 +66,11 @@ export const getAvailableSkills = (
   turn: number
 ): Skill[] => {
   const playerStats = calculateTotalStats(player);
+  
+  // デバッグ: プレイヤーのスキルをログ出力
+  if (turn === 1) {
+    console.log("Player skills:", player.skills.map(s => ({ id: s.id, type: s.type, requiredWeaponTags: s.requiredWeaponTags })));
+  }
   
   return player.skills
     .filter(skill => {
@@ -167,12 +172,13 @@ export const applySkillEffects = (
       case "Damage":
         if (currentMonster && skill.targetType === "Enemy") {
           // 新しいダメージ計算システムを使用
+          // elementが未定義の場合はデフォルトでPhysicalを使用
+          const element = effect.element || "Physical";
           const damage = calculateSkillDamage(
             currentPlayer,
             effect.baseDamage,
             effect.scaling,
-            effect.element,
-            currentMonster
+            element
           );
           
           const actualDamage = Math.max(1, damage) as Damage;
@@ -187,15 +193,35 @@ export const applySkillEffects = (
             skillName: skill.name,
             damage: actualDamage,
             targetId: currentMonster.id,
+            targetName: currentMonster.name,
           });
         }
         break;
         
       case "Heal":
         if (skill.targetType === "Self") {
+          // ヒール量の計算と検証
+          const baseHeal = effect.baseHeal || 0;
+          const scaling = effect.scaling || 0;
+          const skillPower = playerStats.skillPower || 0;
+          
+          if (!Number.isFinite(baseHeal)) {
+            throw new Error(`Invalid baseHeal: ${baseHeal}`);
+          }
+          if (!Number.isFinite(scaling)) {
+            throw new Error(`Invalid heal scaling: ${scaling}`);
+          }
+          if (!Number.isFinite(skillPower)) {
+            throw new Error(`Invalid skillPower: ${skillPower}`);
+          }
+          
           const healAmount = Math.floor(
-            effect.baseHeal + (playerStats.skillPower * effect.scaling)
+            baseHeal + (skillPower * scaling)
           ) as Health;
+          
+          if (!Number.isFinite(healAmount)) {
+            throw new Error(`Invalid healAmount: ${healAmount}`);
+          }
           
           const actualHeal = Math.min(
             healAmount,
@@ -272,7 +298,7 @@ export const regenerateMana = (
 
 // クールダウンを減少
 export const tickCooldowns = (player: Player): Player => {
-  const newCooldowns = new Map<string, number>();
+  const newCooldowns = new Map<SkillId, number>();
   
   player.skillCooldowns.forEach((cooldown, skillId) => {
     if (cooldown > 1) {

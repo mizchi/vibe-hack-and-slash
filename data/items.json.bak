@@ -1,0 +1,241 @@
+{
+  "$schema": "../schemas/items.schema.json",
+  "weapons": [
+    {
+      "id": "sword_basic",
+      "name": "Iron Sword",
+      "type": "Weapon",
+      "tags": ["OneHanded", "Sword"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 20 }
+      ],
+      "weaponScaling": {
+        "strength": 0.8,
+        "dexterity": 0.2
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "sword_advanced",
+      "name": "Steel Sword",
+      "type": "Weapon",
+      "tags": ["OneHanded", "Sword"],
+      "requiredLevel": 5,
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 35 }
+      ],
+      "weaponScaling": {
+        "strength": 0.8,
+        "dexterity": 0.2
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "axe_basic",
+      "name": "Battle Axe",
+      "type": "Weapon",
+      "tags": ["TwoHanded", "Axe"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 40 },
+        { "type": "CriticalDamage", "multiplier": 0.4 }
+      ],
+      "weaponScaling": {
+        "strength": 1.0,
+        "dexterity": 0.1
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "dagger_basic",
+      "name": "Swift Dagger",
+      "type": "Weapon",
+      "tags": ["Dagger", "OneHanded"],
+      "requiredClass": ["Rogue", "Mage"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 18 },
+        { "type": "CriticalChance", "percentage": 0.2 }
+      ],
+      "weaponScaling": {
+        "strength": 0.3,
+        "dexterity": 0.8
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "staff_basic",
+      "name": "Apprentice Staff",
+      "type": "Weapon",
+      "tags": ["Staff", "TwoHanded"],
+      "requiredClass": ["Mage"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 15 },
+        { "type": "SkillPower", "percentage": 20 },
+        { "type": "IncreaseMana", "value": 20 }
+      ],
+      "weaponScaling": {
+        "intelligence": 1.0
+      },
+      "elementType": "Fire"
+    },
+    {
+      "id": "shield_basic",
+      "name": "Wooden Shield",
+      "type": "Weapon",
+      "tags": ["Shield"],
+      "requiredClass": ["Warrior", "Paladin"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 15 },
+        { "type": "IncreaseHealth", "value": 20 }
+      ]
+    },
+    {
+      "id": "mace_basic",
+      "name": "Iron Mace",
+      "type": "Weapon",
+      "tags": ["OneHanded", "Mace"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 25 },
+        { "type": "IncreaseDefense", "value": 5 }
+      ],
+      "weaponScaling": {
+        "strength": 0.9,
+        "vitality": 0.3
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "spear_basic",
+      "name": "Iron Spear",
+      "type": "Weapon",
+      "tags": ["TwoHanded", "Spear"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 30 }
+      ],
+      "weaponScaling": {
+        "strength": 0.6,
+        "dexterity": 0.5
+      },
+      "elementType": "Physical"
+    },
+    {
+      "id": "bow_basic",
+      "name": "Hunting Bow",
+      "type": "Weapon",
+      "tags": ["TwoHanded", "Bow"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 22 },
+        { "type": "CriticalChance", "percentage": 0.15 }
+      ],
+      "weaponScaling": {
+        "dexterity": 1.0,
+        "strength": 0.2
+      },
+      "elementType": "Physical"
+    }
+  ],
+  "armors": [
+    {
+      "id": "armor_cloth",
+      "name": "Cloth Armor",
+      "type": "Armor",
+      "tags": ["ClothArmor"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 10 },
+        { "type": "IncreaseHealth", "value": 25 }
+      ]
+    },
+    {
+      "id": "armor_leather",
+      "name": "Leather Armor",
+      "type": "Armor",
+      "tags": ["LightArmor"],
+      "requiredLevel": 3,
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 20 },
+        { "type": "IncreaseHealth", "value": 50 }
+      ]
+    },
+    {
+      "id": "armor_chain",
+      "name": "Chainmail",
+      "type": "Armor",
+      "tags": ["HeavyArmor"],
+      "requiredClass": ["Warrior", "Paladin"],
+      "requiredLevel": 5,
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 35 },
+        { "type": "IncreaseHealth", "value": 75 }
+      ]
+    },
+    {
+      "id": "helm_basic",
+      "name": "Iron Helm",
+      "type": "Armor",
+      "tags": ["Helm"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 8 },
+        { "type": "IncreaseHealth", "value": 15 }
+      ]
+    },
+    {
+      "id": "gloves_basic",
+      "name": "Leather Gloves",
+      "type": "Armor",
+      "tags": ["Gloves"],
+      "baseModifiers": [
+        { "type": "CriticalChance", "percentage": 0.05 },
+        { "type": "IncreaseDamage", "value": 5 }
+      ]
+    },
+    {
+      "id": "boots_basic",
+      "name": "Leather Boots",
+      "type": "Armor",
+      "tags": ["Boots"],
+      "baseModifiers": [
+        { "type": "IncreaseDefense", "value": 5 },
+        { "type": "IncreaseHealth", "value": 10 }
+      ]
+    }
+  ],
+  "accessories": [
+    {
+      "id": "ring_basic",
+      "name": "Iron Ring",
+      "type": "Accessory",
+      "tags": ["Ring"],
+      "baseModifiers": [
+        { "type": "IncreaseDamage", "value": 8 }
+      ]
+    },
+    {
+      "id": "amulet_health",
+      "name": "Health Amulet",
+      "type": "Accessory",
+      "tags": ["Amulet"],
+      "baseModifiers": [
+        { "type": "IncreaseHealth", "value": 60 }
+      ]
+    },
+    {
+      "id": "ring_vampire",
+      "name": "Vampire Ring",
+      "type": "Accessory",
+      "tags": ["Ring"],
+      "requiredLevel": 8,
+      "baseModifiers": [
+        { "type": "LifeSteal", "percentage": 0.15 }
+      ]
+    },
+    {
+      "id": "belt_basic",
+      "name": "Leather Belt",
+      "type": "Accessory",
+      "tags": ["Belt"],
+      "baseModifiers": [
+        { "type": "IncreaseHealth", "value": 30 },
+        { "type": "IncreaseDefense", "value": 5 }
+      ]
+    }
+  ]
+}

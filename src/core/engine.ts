@@ -93,19 +93,16 @@ export class HeadlessGameEngine {
     }
   }
 
-  // 同期実行（テスト用）
-  runSync(turns?: number): void {
-    const maxTurns = turns || this.config.maxTurns || 1000;
-    
-    for (let i = 0; i < maxTurns && this.session.state === "InProgress"; i++) {
-      this.tickSync();
-    }
+  // 同期実行（テスト用） - 非推奨
+  async runSync(turns?: number): Promise<void> {
+    console.warn("runSync is deprecated. Use run() instead.");
+    await this.run(turns);
   }
 
   // 1ターン処理
   private async tick(): Promise<void> {
     const timestamp = Date.now();
-    const result = processBattleTurn(
+    const result = await processBattleTurn(
       this.session,
       this.baseItems,
       this.monsterTemplates,
@@ -134,34 +131,6 @@ export class HeadlessGameEngine {
     }
   }
 
-  // 同期版tick
-  private tickSync(): void {
-    const timestamp = Date.now();
-    const result = processBattleTurn(
-      this.session,
-      this.baseItems,
-      this.monsterTemplates,
-      this.session.player.skills,
-      this.turn,
-      () => this.random.next()
-    );
-    
-    if (result.ok) {
-      this.session = result.value.updatedSession;
-      
-      if (this.config.autoEquip && result.value.droppedItems) {
-        this.autoEquipBestItems(result.value.droppedItems);
-      }
-      
-      this.logTurn(result.value.events, timestamp);
-      
-      if (this.shouldTakeSnapshot()) {
-        this.takeSnapshot(result.value.events, timestamp);
-      }
-      
-      this.turn++;
-    }
-  }
 
   // 自動装備
   private autoEquipBestItems(items: Item[]): void {

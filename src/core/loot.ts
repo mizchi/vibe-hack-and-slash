@@ -7,7 +7,11 @@ import type {
   LootEntry,
   Level,
   ItemId,
+  MonsterTier,
+  ItemModifier,
 } from "./types.ts";
+import { adjustRarityWeights, adjustDropChance } from "./loot-modifiers.ts";
+import { generateItemWithMoonbit, ENABLE_MOONBIT_INTEGRATION } from "../moonbit/adapter.ts";
 
 // Prefix/Suffixのプール（レアリティによって効果を増幅）
 export const ITEM_PREFIXES: ItemPrefix[] = [
@@ -91,7 +95,30 @@ const applyRarityMultiplier = (
 };
 
 // アイテム生成
-export const generateItem = (
+export const generateItem = async (
+  baseItem: BaseItem,
+  level: Level,
+  rarity: ItemRarity,
+  random: () => number = Math.random
+): Promise<Item> => {
+  // Moonbit統合が有効な場合、Moonbitの実装を使用
+  if (ENABLE_MOONBIT_INTEGRATION) {
+    const moonbitItem = await generateItemWithMoonbit(
+      baseItem.name,
+      level,
+      rarity
+    );
+    if (moonbitItem) {
+      return moonbitItem;
+    }
+    // フォールバック：Moonbitが失敗した場合は既存の実装を使用
+  }
+  
+  return generateItemTS(baseItem, level, rarity, random);
+};
+
+// TypeScript実装（既存のコード）
+const generateItemTS = (
   baseItem: BaseItem,
   level: Level,
   rarity: ItemRarity,
@@ -151,21 +178,27 @@ export const generateItem = (
 };
 
 // ドロップ判定
-export const rollLoot = (
+export const rollLoot = async (
   lootTable: LootEntry[],
   baseItems: Map<ItemId, BaseItem>,
   level: Level,
-  random: () => number = Math.random
-): Item[] => {
+  random: () => number = Math.random,
+  monsterTier: MonsterTier = "Common"
+): Promise<Item[]> => {
   const drops: Item[] = [];
   
   for (const entry of lootTable) {
-    if (random() <= entry.dropChance) {
+    // Tierに基づいてドロップ率を調整
+    const adjustedDropChance = adjustDropChance(entry.dropChance, monsterTier);
+    
+    if (random() <= adjustedDropChance) {
       const baseItem = baseItems.get(entry.baseItemId);
       if (!baseItem) continue;
       
-      const rarity = determineRarity(entry.rarityWeights, random);
-      const item = generateItem(baseItem, level, rarity, random);
+      // Tierに基づいてレアリティウェイトを調整
+      const adjustedWeights = adjustRarityWeights(entry.rarityWeights, monsterTier);
+      const rarity = determineRarity(adjustedWeights, random);
+      const item = await generateItem(baseItem, level, rarity, random);
       drops.push(item);
     }
   }

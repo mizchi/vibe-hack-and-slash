@@ -158,12 +158,12 @@ export class GameLogAnalyzer {
       
       allMods.forEach(mod => {
         switch (mod.type) {
-          case "IncreaseDamage": score += mod.value * 2; break;
+          case "IncreaseStrength": score += mod.value * 2; break;
           case "IncreaseHealth": score += mod.value; break;
-          case "IncreaseDefense": score += mod.value * 1.5; break;
-          case "CriticalChance": score += mod.percentage * 100; break;
-          case "CriticalDamage": score += mod.multiplier * 50; break;
-          case "LifeSteal": score += mod.percentage * 80; break;
+          case "IncreaseVitality": score += mod.value * 1.5; break;
+          case "CriticalChance": score += mod.value * 100; break;
+          case "CriticalDamage": score += mod.value * 50; break;
+          case "LifeSteal": score += mod.value * 80; break;
         }
       });
       
@@ -367,9 +367,19 @@ export class GameLogAnalyzer {
       const prev = this.snapshots[i - 1].session.player.equipment;
       const curr = this.snapshots[i].session.player.equipment;
       
-      if (prev.weapon?.id !== curr.weapon?.id) changes++;
-      if (prev.armor?.id !== curr.armor?.id) changes++;
-      if (prev.accessory?.id !== curr.accessory?.id) changes++;
+      // Mapを使ったequipmentの比較
+      const prevItems = Array.from(prev.values());
+      const currItems = Array.from(curr.values());
+      
+      if (prevItems.length !== currItems.length) {
+        changes++;
+      } else {
+        for (let j = 0; j < prevItems.length; j++) {
+          if (prevItems[j]?.id !== currItems[j]?.id) {
+            changes++;
+          }
+        }
+      }
     }
     
     return changes;

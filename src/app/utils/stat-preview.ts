@@ -1,9 +1,8 @@
 import type { Player, Item, CharacterStats, EquipmentSlot } from "../../core/types.ts";
-import { calculateTotalStats } from "../../core/combat.ts";
+import { calculateTotalStats } from "../../core/damage.ts";
 
 export type StatChange = {
   attack: { current: number; new: number; diff: number };
-  defense: { current: number; new: number; diff: number };
   health: { current: number; new: number; diff: number };
   mana: { current: number; new: number; diff: number };
 };
@@ -29,14 +28,9 @@ export const calculateStatChanges = (
   
   return {
     attack: {
-      current: currentStats.damage,
-      new: newStats.damage,
-      diff: newStats.damage - currentStats.damage,
-    },
-    defense: {
-      current: currentStats.defense,
-      new: newStats.defense,
-      diff: newStats.defense - currentStats.defense,
+      current: currentStats.baseDamage,
+      new: newStats.baseDamage,
+      diff: newStats.baseDamage - currentStats.baseDamage,
     },
     health: {
       current: currentStats.maxHealth,

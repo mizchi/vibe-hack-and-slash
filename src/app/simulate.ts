@@ -2,7 +2,7 @@
 import { HeadlessGameEngine } from "../core/engine.ts";
 import { GameLogAnalyzer } from "../infra/analyzer.ts";
 import { createInitialPlayer } from "../core/session.ts";
-import type { PlayerId } from "../core/types.ts";
+import type { PlayerId, SessionId, ItemId, BaseItem } from "../core/types.ts";
 
 // データ読み込み
 import itemsData from "../../data/items.json" assert { type: "json" };
@@ -36,9 +36,9 @@ async function runSimulation(config: SimulationConfig) {
   console.log("");
 
   // アイテムデータ準備
-  const baseItems = new Map(
+  const baseItems = new Map<ItemId, BaseItem>(
     [...itemsData.weapons, ...itemsData.armors, ...itemsData.accessories].map(
-      (item) => [item.id, item]
+      (item) => [item.id as ItemId, item as BaseItem]
     )
   );
 
@@ -49,9 +49,10 @@ async function runSimulation(config: SimulationConfig) {
     const seed = config.seed ? config.seed + i : Date.now() + i;
     const player = createInitialPlayer(`player_${i}` as PlayerId);
     const session = {
-      id: `session_${i}`,
+      id: `session_${i}` as SessionId,
       player,
       defeatedCount: 0,
+      wave: 1,
       state: "InProgress" as const,
       startedAt: new Date(),
     };
@@ -119,7 +120,7 @@ async function runScenario(
         player.level = (player.level + scenario.playerModifiers.levelBoost) as any;
       }
       if (scenario.playerModifiers.damageMultiplier) {
-        player.baseStats.damage = (player.baseStats.damage * scenario.playerModifiers.damageMultiplier) as any;
+        player.baseStats.baseDamage = (player.baseStats.baseDamage * scenario.playerModifiers.damageMultiplier) as any;
       }
       if (scenario.playerModifiers.healthMultiplier) {
         player.baseStats.maxHealth = (player.baseStats.maxHealth * scenario.playerModifiers.healthMultiplier) as any;
@@ -128,16 +129,21 @@ async function runScenario(
     }
 
     const session = {
-      id: `scenario_session_${i}`,
+      id: `scenario_session_${i}` as SessionId,
       player,
       defeatedCount: 0,
+      wave: 1,
       state: "InProgress" as const,
       startedAt: new Date(),
     };
 
+    const baseItemsMap = new Map<ItemId, BaseItem>(
+      Array.from(baseItems).map(([id, item]) => [id as ItemId, item])
+    );
+    
     const engine = new HeadlessGameEngine(
       session,
-      baseItems,
+      baseItemsMap,
       monstersData.monsters,
       {
         tickInterval: 0,
@@ -195,7 +201,7 @@ function generateAggregateReport(results: any[]) {
     avgStats.legendaryItems += r.analysis.itemAnalysis.itemsByRarity.Legendary || 0;
   });
 
-  Object.keys(avgStats).forEach(key => {
+  (Object.keys(avgStats) as Array<keyof typeof avgStats>).forEach(key => {
     avgStats[key] /= results.length;
   });
 

@@ -41,8 +41,8 @@ export const GameContainer: React.FC<Props> = ({
     const baseDelay = 1000;
     const actualDelay = Math.floor(baseDelay / gameSpeed);
     
-    const timer = setTimeout(() => {
-      const result = processBattleTurn(
+    const timer = setTimeout(async () => {
+      const result = await processBattleTurn(
         session, 
         baseItems, 
         monsterTemplates,
@@ -126,7 +126,9 @@ export const GameContainer: React.FC<Props> = ({
     currentMonster: session.currentMonster ? {
       name: session.currentMonster.name,
       level: session.currentMonster.level,
-      healthPercent: Math.round((session.currentMonster.currentHealth / session.currentMonster.stats.maxHealth) * 100),
+      healthPercent: session.currentMonster.stats.maxHealth > 0 
+        ? Math.round((session.currentMonster.currentHealth / session.currentMonster.stats.maxHealth) * 100)
+        : 0,
     } : undefined,
   };
 
@@ -145,7 +147,7 @@ export const GameContainer: React.FC<Props> = ({
   return (
     <ClearScreen key={`view-${viewKey}`}>
       <Box flexDirection="column" height={40}>
-        <CommonHeader session={session} currentView={viewMode} gameSpeed={gameSpeed} />
+        <CommonHeader session={session} currentView={viewMode} gameSpeed={gameSpeed} battleStatus={battleStatus} />
         
         <Box flexGrow={1} overflow="hidden">
           {viewMode === "battle" ? (

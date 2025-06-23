@@ -2,15 +2,19 @@
 import React, { useState, useEffect } from "react";
 import { render, Text, Box, useInput, useApp } from "ink";
 
-// 1. 基本的なTextコンポーネントのテスト
+// 1. 基本的なTextコンAポーネントのテスト
 const TextExamples: React.FC = () => {
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Text underline>== Textコンポーネントの例 ==</Text>
       <Text>通常のテキスト</Text>
       <Text color="green">緑色のテキスト</Text>
-      <Text color="red" bold>赤色の太字</Text>
-      <Text backgroundColor="blue" color="white">背景色付き</Text>
+      <Text color="red" bold>
+        赤色の太字
+      </Text>
+      <Text backgroundColor="blue" color="white">
+        背景色付き
+      </Text>
       <Text dimColor>薄い色のテキスト</Text>
       <Text italic>イタリック体</Text>
       <Text strikethrough>取り消し線</Text>
@@ -23,7 +27,7 @@ const BoxExamples: React.FC = () => {
   return (
     <Box flexDirection="column" marginBottom={1}>
       <Text underline>== Boxレイアウトの例 ==</Text>
-      
+
       {/* 横並び */}
       <Box marginBottom={1}>
         <Box borderStyle="single" padding={1} marginRight={1}>
@@ -59,26 +63,26 @@ const InteractiveExample: React.FC = () => {
   useInput((input, key) => {
     // 通常のキー入力
     if (input === "+") {
-      setCount(c => c + 1);
+      setCount((c) => c + 1);
       setLastKey("+");
     }
     if (input === "-") {
-      setCount(c => c - 1);
+      setCount((c) => c - 1);
       setLastKey("-");
     }
 
     // 特殊キー
     if (key.leftArrow) {
       setLastKey("←");
-      setLogs(prev => [...prev, "左矢印キーが押されました"]);
+      setLogs((prev) => [...prev, "左矢印キーが押されました"]);
     }
     if (key.rightArrow) {
       setLastKey("→");
-      setLogs(prev => [...prev, "右矢印キーが押されました"]);
+      setLogs((prev) => [...prev, "右矢印キーが押されました"]);
     }
     if (key.return) {
       setLastKey("Enter");
-      setLogs(prev => [...prev, "Enterキーが押されました"]);
+      setLogs((prev) => [...prev, "Enterキーが押されました"]);
     }
   });
 
@@ -87,7 +91,7 @@ const InteractiveExample: React.FC = () => {
       <Text underline>== インタラクティブな例 ==</Text>
       <Text>カウント: {count} （+/- キーで増減）</Text>
       <Text>最後に押されたキー: {lastKey}</Text>
-      
+
       <Box borderStyle="single" marginTop={1} padding={1} height={4}>
         <Box flexDirection="column">
           {logs.slice(-3).map((log, i) => (
@@ -105,7 +109,7 @@ const TimerExample: React.FC = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setSeconds(s => s + 1);
+      setSeconds((s) => s + 1);
     }, 1000);
 
     return () => clearInterval(timer);

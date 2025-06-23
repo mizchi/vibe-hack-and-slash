@@ -1,0 +1,13 @@
+{
+  "$schema": "../schemas/weapon-skills.schema.json",
+  "weaponSkills": {
+    "sword_basic": "sword_basic_skill",
+    "sword_advanced": "sword_master_skill",
+    "axe_basic": "axe_whirlwind",
+    "staff_basic": "arcane_blast",
+    "dagger": "shadow_strike_weapon",
+    "mace_basic": "holy_smite",
+    "spear_basic": "piercing_thrust",
+    "bow_basic": "arrow_volley"
+  }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, useApp } from "ink";
-import type { Session, PlayerClass } from "../core/types.ts";
+import type { Session, PlayerClass, ItemId, BaseItem, PlayerId, EquipmentSlot, SessionId, Skill, Item, Level } from "../core/types.ts";
 import { createInitialPlayer, createSession } from "../core/session.ts";
 import type { ViewType } from "./types.ts";
 import { OpeningView } from "./components/OpeningView.tsx";
@@ -23,9 +23,9 @@ export const Game: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
 
   // データ準備
-  const baseItems = new Map(
+  const baseItems = new Map<ItemId, BaseItem>(
     [...itemsData.weapons, ...itemsData.armors, ...itemsData.accessories].map(
-      (item) => [item.id, item]
+      (item) => [item.id as ItemId, item as BaseItem]
     )
   );
 
@@ -35,29 +35,39 @@ export const Game: React.FC = () => {
     
     // 職業別のスキルを取得
     const classSkillIds = classSkillsData[playerClass] || [];
-    const classSkills = skillsData.skills.filter(skill => 
-      classSkillIds.includes(skill.id) || 
-      (!skill.requiredClass || skill.requiredClass.length === 0) // クラス制限のない基本スキルも含む
-    );
+    const classSkills = skillsData.skills.filter(skill => {
+      // クラス専用スキル
+      if (classSkillIds.includes(skill.id)) {
+        return true;
+      }
+      // クラス制限がある場合、該当クラスかチェック
+      if (skill.requiredClass && skill.requiredClass.length > 0) {
+        return skill.requiredClass.includes(playerClass);
+      }
+      // クラス制限がない基本スキルは含めない（クラス専用スキルのみ）
+      return false;
+    });
     
-    const player = createInitialPlayer("player1", playerClass, classSkills);
+    // console.log(`${playerClass} initial skills:`, classSkills.map(s => s.id));
+    
+    const player = createInitialPlayer("player1" as PlayerId, playerClass, classSkills as Skill[]);
     
     // 初期装備を付与
     const starterEquipment = starterEquipmentData[playerClass] || [];
     starterEquipment.forEach(({ baseItemId, slot }) => {
-      const baseItem = baseItems.get(baseItemId);
+      const baseItem = baseItems.get(baseItemId as ItemId);
       if (baseItem) {
-        const item = {
-          id: `starter_${baseItemId}`,
+        const item: Item = {
+          id: `starter_${baseItemId}` as ItemId,
           baseItem,
           rarity: "Common",
-          level: 1
+          level: 1 as Level
         };
-        player.equipment.set(slot, item);
+        player.equipment.set(slot as EquipmentSlot, item);
       }
     });
     
-    const newSession = createSession("session1", player);
+    const newSession = createSession("session1" as SessionId, player);
     setSession(newSession);
     setCurrentView("Field");
   };
@@ -112,7 +122,7 @@ export const Game: React.FC = () => {
           onSessionUpdate={handleSessionUpdate}
           baseItems={baseItems}
           monsterTemplates={monstersData.monsters}
-          skills={skillsData.skills}
+          skills={skillsData.skills as Skill[]}
         />
       );
     

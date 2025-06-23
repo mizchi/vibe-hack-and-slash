@@ -1,4 +1,5 @@
 import { Result, Ok, Err, GameError } from "./types.ts";
+import skillsData from "../../data/skills.json" assert { type: "json" };
 import type {
   Session,
   SessionId,
@@ -30,13 +31,14 @@ import type {
 import { playerAttack, monsterAttack, applyExperience } from "./combat.ts";
 import { rollLoot } from "./loot.ts";
 import { getAvailableSkills, applySkillEffects, regenerateMana, tickCooldowns, updateSkillTimers } from "./skills.ts";
+import { TIER_MODIFIERS } from "./loot-modifiers.ts";
+import { calculateTotalStats } from "./damage.ts";
 
 // クラス別の初期ステータス
 const CLASS_BASE_STATS = {
   Warrior: {
     maxHealth: 120 as Health,
-    damage: 15 as Damage,
-    defense: 5,
+    baseDamage: 15 as Damage,
     criticalChance: 0.1,
     criticalDamage: 1.5,
     lifeSteal: 0,
@@ -46,8 +48,7 @@ const CLASS_BASE_STATS = {
   },
   Mage: {
     maxHealth: 80 as Health,
-    damage: 8 as Damage,
-    defense: 0,
+    baseDamage: 8 as Damage,
     criticalChance: 0.15,
     criticalDamage: 2.0,
     lifeSteal: 0,
@@ -57,8 +58,7 @@ const CLASS_BASE_STATS = {
   },
   Rogue: {
     maxHealth: 90 as Health,
-    damage: 12 as Damage,
-    defense: 2,
+    baseDamage: 12 as Damage,
     criticalChance: 0.25,
     criticalDamage: 2.5,
     lifeSteal: 0.05,
@@ -68,8 +68,7 @@ const CLASS_BASE_STATS = {
   },
   Paladin: {
     maxHealth: 110 as Health,
-    damage: 12 as Damage,
-    defense: 8,
+    baseDamage: 12 as Damage,
     criticalChance: 0.1,
     criticalDamage: 1.5,
     lifeSteal: 0.02,
@@ -110,11 +109,10 @@ const CLASS_BASE_ATTRIBUTES = {
 // 初期属性耐性
 const INITIAL_ELEMENT_RESISTANCE: ElementResistance = {
   Physical: 0,
+  Arcane: 0,
   Fire: 0,
-  Ice: 0,
   Lightning: 0,
   Holy: 0,
-  Dark: 0,
 };
 
 // 初期プレイヤー作成
@@ -124,6 +122,7 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
   
   return {
     id,
+    name: playerClass, // プレイヤー名はクラス名で初期化
     class: playerClass,
     level: 1 as Level,
     experience: 0 as Experience,
@@ -132,9 +131,11 @@ export const createInitialPlayer = (id: PlayerId, playerClass: PlayerClass = "Wa
     baseStats,
     baseAttributes,
     equipment: new Map(),
+    inventory: [], // 空のインベントリ
     skills, // 全スキルを付与
     skillCooldowns: new Map(),
-    skillTimers: new Map(),
+    skillTimers: new Map(), // スキルタイマー
+    activeBuffs: [], // 空のバフリスト
     elementResistance: { ...INITIAL_ELEMENT_RESISTANCE },
     gold: 100 as Gold, // 初期ゴールド
   };
@@ -176,31 +177,35 @@ export const spawnMonster = (
   // デフォルトの属性耐性（テンプレートに定義がない場合）
   const defaultResistance: ElementResistance = {
     Physical: 0,
+    Arcane: 0,
     Fire: 0,
-    Ice: 0,
     Lightning: 0,
     Holy: 0,
-    Dark: 0,
   };
+  
+  // 安全なヘルス計算
+  const baseHealth = template.baseStats?.health || 30;
+  const maxHealth = (baseHealth + monsterLevel * 10) as Health;
+  
   
   return {
     id: `${template.id}_${Date.now()}` as MonsterId,
     name: template.name,
+    tier: template.tier || "Common",
     level: monsterLevel,
-    currentHealth: (template.baseStats.health + monsterLevel * 10) as Health,
+    currentHealth: maxHealth,
     stats: {
-      maxHealth: (template.baseStats.health + monsterLevel * 10) as Health,
-      damage: (template.baseStats.damage + monsterLevel * 2) as Damage,
-      defense: template.baseStats.defense + Math.floor(monsterLevel / 2),
-      criticalChance: template.baseStats.criticalChance,
-      criticalDamage: template.baseStats.criticalDamage,
-      lifeSteal: template.baseStats.lifeSteal,
+      maxHealth: maxHealth,
+      baseDamage: ((template.baseStats?.baseDamage || template.baseStats?.damage || 5) + monsterLevel * 2) as Damage,
+      criticalChance: template.baseStats?.criticalChance || 0.05,
+      criticalDamage: template.baseStats?.criticalDamage || 1.5,
+      lifeSteal: template.baseStats?.lifeSteal || 0,
       maxMana: 0 as Mana,
       manaRegen: 0,
       skillPower: 0,
     },
     elementResistance: template.elementResistance || defaultResistance,
-    lootTable: template.lootTable,
+    lootTable: template.lootTable || [],
   };
 };
 
@@ -211,14 +216,14 @@ export type TurnResult = {
   droppedItems?: Item[];
 };
 
-export const processBattleTurn = (
+export const processBattleTurn = async (
   session: Session,
   baseItems: Map<ItemId, BaseItem>,
   monsterTemplates: any[],
   skills: Skill[] = [],
   turn: number = 0,
   random: () => number = Math.random
-): Result<TurnResult, GameError> => {
+): Promise<Result<TurnResult, GameError>> => {
   if (session.state !== "InProgress") {
     return Err({ type: "InvalidAction", message: "Session is not in progress" });
   }
@@ -269,7 +274,7 @@ export const processBattleTurn = (
   // ライフスティールによる回復
   const healEvent = events.find(e => e.type === "PlayerHeal");
   if (healEvent && healEvent.type === "PlayerHeal") {
-    const totalStats = currentPlayer.baseStats;
+    const totalStats = calculateTotalStats(currentPlayer);
     currentPlayer = {
       ...currentPlayer,
       currentHealth: Math.min(
@@ -298,10 +303,23 @@ export const processBattleTurn = (
     }
     
     // アイテムドロップ
-    droppedItems = rollLoot(currentMonster.lootTable, baseItems, currentMonster.level, random);
+    droppedItems = await rollLoot(currentMonster.lootTable, baseItems, currentMonster.level, random, currentMonster.tier);
     droppedItems.forEach(item => {
       events.push({ type: "ItemDropped", item });
     });
+    
+    // ゴールドドロップ
+    const baseGold = Math.floor((currentMonster.level * 10 + 20) * (0.8 + random() * 0.4));
+    const goldMultiplier = TIER_MODIFIERS[currentMonster.tier].goldMultiplier;
+    const goldDrop = Math.floor(baseGold * goldMultiplier) as Gold;
+    
+    if (goldDrop > 0) {
+      events.push({ type: "GoldDropped", amount: goldDrop });
+      currentPlayer = {
+        ...currentPlayer,
+        gold: (currentPlayer.gold + goldDrop) as Gold,
+      };
+    }
     
     // 次のモンスターをスポーン
     currentMonster = spawnMonster(monsterTemplates, currentPlayer.level, random);
@@ -350,22 +368,80 @@ export const processAction = (
       const { item, slot } = action;
       const newEquipment = new Map(session.player.equipment);
       newEquipment.set(slot, item);
+      
+      // 武器スキルの自動設定
+      let newSkills = [...session.player.skills];
+      
+      // MainHandに武器を装備した場合
+      if (slot === "MainHand" && item.baseItem.tags) {
+        // 既存の武器スキルを削除（クラス専用スキルは保持）
+        newSkills = newSkills.filter(skill => 
+          !skill.requiredWeaponTags || 
+          skill.requiredWeaponTags.length === 0 ||
+          (skill.requiredClass && skill.requiredClass.includes(session.player.class))
+        );
+        
+        // 新しい武器に対応するスキルを追加
+        const weaponSkills = (skillsData.skills as Skill[]).filter(skill => {
+          // 武器タグ要求があるスキル
+          if (skill.requiredWeaponTags && skill.requiredWeaponTags.length > 0) {
+            // 武器のタグがスキルの要求タグを満たすか
+            const hasRequiredTag = skill.requiredWeaponTags.some(tag => 
+              item.baseItem.tags.includes(tag)
+            );
+            if (!hasRequiredTag) return false;
+            
+            // クラス制限がある場合、プレイヤーのクラスが一致するか
+            if (skill.requiredClass && skill.requiredClass.length > 0) {
+              return skill.requiredClass.includes(session.player.class);
+            }
+            
+            return true;
+          }
+          return false;
+        });
+        
+        // 新しい武器スキルを追加（重複を避ける）
+        weaponSkills.forEach(weaponSkill => {
+          if (!newSkills.some(s => s.id === weaponSkill.id)) {
+            newSkills.push(weaponSkill);
+          }
+        });
+      }
+      
       return Ok({
         ...session,
         player: {
           ...session.player,
           equipment: newEquipment,
+          skills: newSkills,
         },
       });
       
     case "UnequipItem":
       const updatedEquipment = new Map(session.player.equipment);
+      const removedItem = updatedEquipment.get(action.slot);
       updatedEquipment.delete(action.slot);
+      
+      // 武器スキルの削除
+      let updatedSkills = [...session.player.skills];
+      
+      // MainHandから武器を外した場合
+      if (action.slot === "MainHand" && removedItem) {
+        // 武器要求スキルを削除（クラス専用スキルは保持）
+        updatedSkills = updatedSkills.filter(skill => 
+          !skill.requiredWeaponTags || 
+          skill.requiredWeaponTags.length === 0 ||
+          (skill.requiredClass && skill.requiredClass.includes(session.player.class))
+        );
+      }
+      
       return Ok({
         ...session,
         player: {
           ...session.player,
           equipment: updatedEquipment,
+          skills: updatedSkills,
         },
       });
       

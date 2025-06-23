@@ -6,14 +6,19 @@
       "name": "Iron Sword",
       "type": "Weapon",
       "tags": ["OneHanded", "Sword"],
-      "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 20 }
-      ],
+      "baseModifiers": [],
+      "elementModifiers": {
+        "Physical": 1.2,
+        "Arcane": 0.8,
+        "Fire": 1.0,
+        "Lightning": 1.0,
+        "Holy": 1.0
+      },
+      "weaponSkillId": "sword_basic_skill",
       "weaponScaling": {
         "strength": 0.8,
         "dexterity": 0.2
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "sword_advanced",
@@ -21,14 +26,19 @@
       "type": "Weapon",
       "tags": ["OneHanded", "Sword"],
       "requiredLevel": 5,
-      "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 35 }
-      ],
+      "baseModifiers": [],
+      "elementModifiers": {
+        "Physical": 1.3,
+        "Arcane": 0.8,
+        "Fire": 1.1,
+        "Lightning": 1.0,
+        "Holy": 1.0
+      },
+      "weaponSkillId": "sword_master_skill",
       "weaponScaling": {
         "strength": 0.8,
         "dexterity": 0.2
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "axe_basic",
@@ -36,14 +46,20 @@
       "type": "Weapon",
       "tags": ["TwoHanded", "Axe"],
       "baseModifiers": [
-        { "type": "IncreaseDamage", "value": 40 },
         { "type": "CriticalDamage", "multiplier": 0.4 }
       ],
+      "elementModifiers": {
+        "Physical": 1.4,
+        "Arcane": 0.6,
+        "Fire": 1.1,
+        "Lightning": 0.9,
+        "Holy": 0.8
+      },
+      "weaponSkillId": "axe_whirlwind",
       "weaponScaling": {
         "strength": 1.0,
         "dexterity": 0.1
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "dagger_basic",
@@ -55,11 +71,18 @@
         { "type": "IncreaseDamage", "value": 18 },
         { "type": "CriticalChance", "percentage": 0.2 }
       ],
+      "elementModifiers": {
+        "Physical": 1.1,
+        "Arcane": 0.9,
+        "Fire": 1.0,
+        "Lightning": 1.1,
+        "Holy": 0.8
+      },
+      "weaponSkillId": "shadow_strike_weapon",
       "weaponScaling": {
         "strength": 0.3,
         "dexterity": 0.8
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "staff_basic",
@@ -72,10 +95,17 @@
         { "type": "SkillPower", "percentage": 20 },
         { "type": "IncreaseMana", "value": 20 }
       ],
+      "elementModifiers": {
+        "Physical": 0.6,
+        "Arcane": 1.4,
+        "Fire": 1.3,
+        "Lightning": 1.1,
+        "Holy": 0.9
+      },
+      "weaponSkillId": "arcane_blast",
       "weaponScaling": {
         "intelligence": 1.0
-      },
-      "elementType": "Fire"
+      }
     },
     {
       "id": "shield_basic",
@@ -86,7 +116,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 15 },
         { "type": "IncreaseHealth", "value": 20 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.1,
+        "Arcane": 0.9,
+        "Fire": 0.9,
+        "Lightning": 0.8,
+        "Holy": 1.0
+      }
     },
     {
       "id": "mace_basic",
@@ -97,11 +134,18 @@
         { "type": "IncreaseDamage", "value": 25 },
         { "type": "IncreaseDefense", "value": 5 }
       ],
+      "elementModifiers": {
+        "Physical": 1.2,
+        "Arcane": 0.8,
+        "Fire": 0.9,
+        "Lightning": 0.9,
+        "Holy": 1.3
+      },
+      "weaponSkillId": "holy_smite",
       "weaponScaling": {
         "strength": 0.9,
         "vitality": 0.3
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "spear_basic",
@@ -111,11 +155,18 @@
       "baseModifiers": [
         { "type": "IncreaseDamage", "value": 30 }
       ],
+      "elementModifiers": {
+        "Physical": 1.3,
+        "Arcane": 0.7,
+        "Fire": 1.0,
+        "Lightning": 1.1,
+        "Holy": 0.9
+      },
+      "weaponSkillId": "piercing_thrust",
       "weaponScaling": {
         "strength": 0.6,
         "dexterity": 0.5
-      },
-      "elementType": "Physical"
+      }
     },
     {
       "id": "bow_basic",
@@ -126,11 +177,18 @@
         { "type": "IncreaseDamage", "value": 22 },
         { "type": "CriticalChance", "percentage": 0.15 }
       ],
+      "elementModifiers": {
+        "Physical": 1.2,
+        "Arcane": 0.8,
+        "Fire": 1.0,
+        "Lightning": 1.1,
+        "Holy": 0.9
+      },
+      "weaponSkillId": "arrow_volley",
       "weaponScaling": {
         "dexterity": 1.0,
         "strength": 0.2
-      },
-      "elementType": "Physical"
+      }
     }
   ],
   "armors": [
@@ -142,7 +200,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 10 },
         { "type": "IncreaseHealth", "value": 25 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 0.8,
+        "Arcane": 1.2,
+        "Fire": 1.1,
+        "Lightning": 1.0,
+        "Holy": 1.1
+      }
     },
     {
       "id": "armor_leather",
@@ -153,7 +218,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 20 },
         { "type": "IncreaseHealth", "value": 50 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.0,
+        "Arcane": 0.9,
+        "Fire": 1.0,
+        "Lightning": 1.0,
+        "Holy": 1.0
+      }
     },
     {
       "id": "armor_chain",
@@ -165,7 +237,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 35 },
         { "type": "IncreaseHealth", "value": 75 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.3,
+        "Arcane": 0.7,
+        "Fire": 0.9,
+        "Lightning": 0.8,
+        "Holy": 1.0
+      }
     },
     {
       "id": "helm_basic",
@@ -175,7 +254,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 8 },
         { "type": "IncreaseHealth", "value": 15 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.1,
+        "Arcane": 0.9,
+        "Fire": 0.9,
+        "Lightning": 0.9,
+        "Holy": 1.0
+      }
     },
     {
       "id": "gloves_basic",
@@ -185,7 +271,14 @@
       "baseModifiers": [
         { "type": "CriticalChance", "percentage": 0.05 },
         { "type": "IncreaseDamage", "value": 5 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.0,
+        "Arcane": 1.0,
+        "Fire": 1.0,
+        "Lightning": 1.0,
+        "Holy": 1.0
+      }
     },
     {
       "id": "boots_basic",
@@ -195,7 +288,14 @@
       "baseModifiers": [
         { "type": "IncreaseDefense", "value": 5 },
         { "type": "IncreaseHealth", "value": 10 }
-      ]
+      ],
+      "elementModifiers": {
+        "Physical": 1.0,
+        "Arcane": 1.0,
+        "Fire": 1.0,
+        "Lightning": 1.0,
+        "Holy": 1.0
+      }
     }
   ],
   "accessories": [

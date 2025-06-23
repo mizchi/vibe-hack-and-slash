@@ -535,6 +535,102 @@
       ],
       "priority": 10,
       "requiredClass": ["Paladin"]
+    },
+    {
+      "id": "warrior_training",
+      "name": "戦士の訓練",
+      "description": "Warrior専用。STRとVITを永続的に上昇",
+      "type": "Passive",
+      "manaCost": 0,
+      "cooldown": 0,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "strength",
+          "value": 5,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "vitality",
+          "value": 5,
+          "duration": -1
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 0,
+      "requiredClass": ["Warrior"]
+    },
+    {
+      "id": "nimble_fingers",
+      "name": "器用な指先",
+      "description": "Rogue専用。DEXとクリティカル率を永続的に上昇",
+      "type": "Passive",
+      "manaCost": 0,
+      "cooldown": 0,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "dexterity",
+          "value": 8,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "criticalChance",
+          "value": 0.1,
+          "duration": -1
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 0,
+      "requiredClass": ["Rogue"]
+    },
+    {
+      "id": "divine_blessing",
+      "name": "聖なる祝福",
+      "description": "Paladin専用。全属性値を少しずつ上昇",
+      "type": "Passive",
+      "manaCost": 0,
+      "cooldown": 0,
+      "targetType": "Self",
+      "effects": [
+        {
+          "type": "Buff",
+          "stat": "strength",
+          "value": 3,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "intelligence",
+          "value": 3,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "dexterity",
+          "value": 3,
+          "duration": -1
+        },
+        {
+          "type": "Buff",
+          "stat": "vitality",
+          "value": 3,
+          "duration": -1
+        }
+      ],
+      "triggerConditions": [
+        { "type": "Always" }
+      ],
+      "priority": 0,
+      "requiredClass": ["Paladin"]
     }
   ]
 }

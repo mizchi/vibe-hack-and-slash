@@ -2,7 +2,11 @@
 import { HeadlessGameEngine } from "../core/engine.ts";
 import { CombatAnalyzer } from "../infra/combat-analyzer.ts";
 import { createInitialPlayer } from "../core/session.ts";
-import type { PlayerId, Skill } from "../core/types.ts";
+import type { PlayerId, SessionId, Skill, ItemId, BaseItem } from "../core/types.ts";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 // データ読み込み
 import itemsData from "../../data/items.json" assert { type: "json" };
@@ -36,9 +40,9 @@ async function runEvaluation(config: EvaluationConfig): Promise<EvaluationResult
   console.log(`設定: ${config.runs}回実行, 各${config.turnsPerRun}ターン`);
   console.log("");
 
-  const baseItems = new Map(
+  const baseItems = new Map<ItemId, BaseItem>(
     [...itemsData.weapons, ...itemsData.armors, ...itemsData.accessories].map(
-      (item) => [item.id, item]
+      (item) => [item.id as ItemId, item as BaseItem]
     )
   );
 
@@ -64,9 +68,10 @@ async function runEvaluation(config: EvaluationConfig): Promise<EvaluationResult
       player.skills = skills;
       
       const session = {
-        id: `session_${i}`,
+        id: `session_${i}` as SessionId,
         player,
         defeatedCount: 0,
+        wave: 1,
         state: "InProgress" as const,
         startedAt: new Date(),
       };
@@ -162,18 +167,18 @@ function printDetailedAnalysis(analysis: any) {
   console.log(`  - 状況適応性: ${analysis.equipmentImpact.adaptability.toFixed(1)}%`);
 
   console.log("\n戦闘フロー:");
-  analysis.combatFlow.phasesIdentified.forEach(phase => {
+  analysis.combatFlow.phasesIdentified.forEach((phase: any) => {
     console.log(`  - ${phase.type}期 (Turn ${phase.startTurn}-${phase.endTurn}): ${phase.characteristics.join(", ")}`);
   });
 
   console.log("\nパワースパイク:");
-  analysis.combatFlow.powerSpikes.slice(0, 5).forEach(spike => {
+  analysis.combatFlow.powerSpikes.slice(0, 5).forEach((spike: any) => {
     console.log(`  - Turn ${spike.turn}: ${spike.type} (強度: ${spike.magnitude.toFixed(2)})`);
   });
 
   if (analysis.recommendations.length > 0) {
     console.log("\n推奨事項:");
-    analysis.recommendations.forEach(rec => console.log(`  - ${rec}`));
+    analysis.recommendations.forEach((rec: any) => console.log(`  - ${rec}`));
   }
 }
 
@@ -257,29 +262,57 @@ function compareResults(results: EvaluationResult[]) {
 
 // メイン実行
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const config: EvaluationConfig = {
-    runs: 20,
-    turnsPerRun: 200,
-    skillSets: [
-      {
-        name: "バランス型（ファイアボール＋ヒール＋緊急治療）",
-        skills: ["fireball", "heal", "emergency_heal"],
-      },
-      {
-        name: "攻撃特化（ファイアボール＋パワーストライク＋処刑）",
-        skills: ["fireball", "power_strike", "execute"],
-      },
-      {
-        name: "生存重視（ヒール＋緊急治療＋ブラッドドレイン）",
-        skills: ["heal", "emergency_heal", "blood_drain"],
-      },
-      {
-        name: "コンボ型（クリティカルバースト＋処刑＋瞑想）",
-        skills: ["critical_burst", "execute", "meditation"],
-      },
-    ],
-    showDetailedReport: true,
-  };
-
-  runEvaluation(config).catch(console.error);
+  async function main() {
+    console.log("🎮 ゲームシステム総合評価");
+    console.log("=".repeat(70));
+    
+    // ステップ1: ユニットテスト実行
+    console.log("\n📋 ステップ1: 戦闘システムユニットテスト");
+    console.log("-".repeat(70));
+    
+    try {
+      const { stdout } = await execAsync('npm run test:battle');
+      console.log(stdout);
+      console.log("\n✅ 全てのテストに成功しました！");
+    } catch (error: any) {
+      console.error("\n❌ テストに失敗しました。バランス評価を中止します。");
+      if (error.stdout) console.log(error.stdout);
+      if (error.stderr) console.error(error.stderr);
+      process.exit(1);
+    }
+    
+    // ステップ2: バランス評価
+    console.log("\n📊 ステップ2: ゲームバランス評価");
+    console.log("-".repeat(70));
+    
+    const config: EvaluationConfig = {
+      runs: 20,
+      turnsPerRun: 200,
+      skillSets: [
+        {
+          name: "バランス型（ファイアボール＋ヒール＋緊急治療）",
+          skills: ["fireball", "heal", "emergency_heal"],
+        },
+        {
+          name: "攻撃特化（ファイアボール＋パワーストライク＋処刑）",
+          skills: ["fireball", "power_strike", "execute"],
+        },
+        {
+          name: "生存重視（ヒール＋緊急治療＋ブラッドドレイン）",
+          skills: ["heal", "emergency_heal", "blood_drain"],
+        },
+        {
+          name: "コンボ型（クリティカルバースト＋処刑＋瞑想）",
+          skills: ["critical_burst", "execute", "meditation"],
+        },
+      ],
+      showDetailedReport: true,
+    };
+    
+    await runEvaluation(config);
+    
+    console.log("\n✅ 評価完了！");
+  }
+  
+  main().catch(console.error);
 }

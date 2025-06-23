@@ -33,10 +33,14 @@ const LootEntrySchema = z.object({
   })
 });
 
+// MonsterTier enum
+export const MonsterTierSchema = z.enum(["Common", "Elite", "Rare", "Boss", "Legendary"]);
+
 // MonsterTemplate
 export const MonsterTemplateSchema = z.object({
   id: z.string().regex(/^[a-z_]+$/),
   name: z.string(),
+  tier: MonsterTierSchema,
   levelRange: z.object({
     min: z.number().int().min(1),
     max: z.number().int().min(1)

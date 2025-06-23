@@ -4,172 +4,183 @@ import type {
   Damage, 
   ElementType, 
   ElementResistance,
+  ElementModifier,
   BaseStats,
   WeaponScaling,
-  Item
+  Item,
+  CharacterStats,
+  Strength,
+  Intelligence,
+  Dexterity,
+  Vitality,
+  Health,
+  Mana
 } from "./types.ts";
-import { calculateTotalStats } from "./combat.ts";
+
+// デフォルトの属性修正値
+const DEFAULT_ELEMENT_MODIFIER: ElementModifier = {
+  Physical: 1.0,
+  Arcane: 1.0,
+  Fire: 1.0,
+  Lightning: 1.0,
+  Holy: 1.0,
+};
+
+// プレイヤーの総合属性修正値を計算
+export const calculateTotalElementModifiers = (player: Player): ElementModifier => {
+  const result = { ...DEFAULT_ELEMENT_MODIFIER };
+  
+  // 装備品からの属性修正を集計
+  for (const [, item] of player.equipment) {
+    if (item.baseItem.elementModifiers) {
+      for (const [element, modifier] of Object.entries(item.baseItem.elementModifiers)) {
+        if (!Number.isFinite(modifier)) {
+          throw new Error(`Invalid element modifier for ${element}: ${modifier}`);
+        }
+        result[element as ElementType] *= modifier;
+      }
+    }
+  }
+  
+  // 結果の検証
+  for (const [element, value] of Object.entries(result)) {
+    if (!Number.isFinite(value)) {
+      throw new Error(`Invalid total element modifier for ${element}: ${value}`);
+    }
+  }
+  
+  return result;
+};
 
 // 属性耐性によるダメージ計算
 export const calculateElementalDamage = (
   baseDamage: number,
   element: ElementType,
-  targetResistance: ElementResistance
+  targetResistance: ElementResistance,
+  attackerModifier: number = 1.0
 ): number => {
+  // 引数の検証
+  if (!Number.isFinite(baseDamage)) {
+    throw new Error(`Invalid baseDamage: ${baseDamage}`);
+  }
+  if (!Number.isFinite(attackerModifier)) {
+    throw new Error(`Invalid attackerModifier: ${attackerModifier}`);
+  }
+  
+  // 攻撃側の属性修正を適用
+  const modifiedDamage = baseDamage * attackerModifier;
+  
+  // 防御側の属性耐性を適用
   const resistance = targetResistance[element] || 0;
-  // 耐性は-100%から100%の間で計算
-  // 負の値は弱点（ダメージ増加）
-  const multiplier = 1 - (resistance / 100);
-  return Math.max(0, Math.floor(baseDamage * multiplier));
+  if (!Number.isFinite(resistance)) {
+    throw new Error(`Invalid resistance for ${element}: ${resistance}`);
+  }
+  
+  const resistanceMultiplier = 1 - (resistance / 100);
+  const finalDamage = Math.max(1, Math.floor(modifiedDamage * resistanceMultiplier));
+  
+  if (!Number.isFinite(finalDamage)) {
+    throw new Error(`Invalid finalDamage in calculateElementalDamage: ${finalDamage}`);
+  }
+  
+  return finalDamage;
 };
 
-// 武器ダメージの計算（ステータススケーリング込み）
-export const calculateWeaponDamage = (
-  weapon: Item | undefined,
-  playerAttributes: BaseStats
+// ステータスからベースダメージを計算
+export const calculateBaseDamageFromStats = (
+  stats: CharacterStats,
+  attributes: BaseStats,
+  weaponScaling?: WeaponScaling
 ): number => {
-  if (!weapon || weapon.baseItem.type !== "Weapon") {
-    // 素手の場合はSTRの半分
-    return Math.floor(playerAttributes.strength / 2);
-  }
-
-  const baseItem = weapon.baseItem;
-  const scaling = baseItem.weaponScaling || { strength: 0.5 }; // デフォルトはSTR50%
+  let baseDamage = stats.baseDamage;
   
-  // 基礎ダメージを取得
-  let baseDamage = 0;
-  for (const mod of baseItem.baseModifiers) {
-    if (mod.type === "IncreaseDamage") {
-      baseDamage += mod.value;
+  if (weaponScaling) {
+    // 武器のスケーリングに基づいてステータスからダメージを計算
+    if (weaponScaling.strength) {
+      baseDamage = (baseDamage + Math.floor(attributes.strength * weaponScaling.strength)) as Damage;
     }
-  }
-  
-  // Prefix/Suffixからの追加ダメージ
-  if (weapon.prefix) {
-    for (const mod of weapon.prefix.modifiers) {
-      if (mod.type === "IncreaseDamage") {
-        baseDamage += mod.value;
-      }
+    if (weaponScaling.intelligence) {
+      baseDamage = (baseDamage + Math.floor(attributes.intelligence * weaponScaling.intelligence)) as Damage;
     }
-  }
-  if (weapon.suffix) {
-    for (const mod of weapon.suffix.modifiers) {
-      if (mod.type === "IncreaseDamage") {
-        baseDamage += mod.value;
-      }
+    if (weaponScaling.dexterity) {
+      baseDamage = (baseDamage + Math.floor(attributes.dexterity * weaponScaling.dexterity)) as Damage;
     }
+  } else {
+    // デフォルトはSTRの50%
+    baseDamage = (baseDamage + Math.floor(attributes.strength * 0.5)) as Damage;
   }
   
-  // ステータススケーリングを適用
-  let scaledDamage = baseDamage;
-  if (scaling.strength) {
-    scaledDamage += Math.floor(playerAttributes.strength * scaling.strength);
-  }
-  if (scaling.intelligence) {
-    scaledDamage += Math.floor(playerAttributes.intelligence * scaling.intelligence);
-  }
-  if (scaling.dexterity) {
-    scaledDamage += Math.floor(playerAttributes.dexterity * scaling.dexterity);
-  }
-  
-  return scaledDamage;
+  return baseDamage;
 };
 
-// プレイヤーの合計属性を計算
+// プレイヤーの総合属性値を計算
 export const calculateTotalAttributes = (player: Player): BaseStats => {
-  const total = { ...player.baseAttributes };
+  // baseAttributesが未定義の場合のデフォルト値
+  const baseAttributes = player.baseAttributes ? { ...player.baseAttributes } : {
+    strength: 10 as Strength,
+    intelligence: 10 as Intelligence,
+    dexterity: 10 as Dexterity,
+    vitality: 10 as Vitality,
+  };
   
-  // 装備からの属性ボーナスを加算
-  for (const [_, item] of player.equipment) {
+  // 装備からの属性ボーナスを計算
+  for (const [, item] of player.equipment) {
     const allModifiers = [
-      ...(item.baseItem.baseModifiers || []),
+      ...item.baseItem.baseModifiers,
       ...(item.prefix?.modifiers || []),
       ...(item.suffix?.modifiers || []),
-      ...(item.modifiers || [])
     ];
     
     for (const mod of allModifiers) {
       switch (mod.type) {
         case "IncreaseStrength":
-          total.strength = (total.strength + mod.value) as any;
+          baseAttributes.strength = (baseAttributes.strength + mod.value) as Strength;
           break;
         case "IncreaseIntelligence":
-          total.intelligence = (total.intelligence + mod.value) as any;
+          baseAttributes.intelligence = (baseAttributes.intelligence + mod.value) as Intelligence;
           break;
         case "IncreaseDexterity":
-          total.dexterity = (total.dexterity + mod.value) as any;
+          baseAttributes.dexterity = (baseAttributes.dexterity + mod.value) as Dexterity;
           break;
         case "IncreaseVitality":
-          total.vitality = (total.vitality + mod.value) as any;
+          baseAttributes.vitality = (baseAttributes.vitality + mod.value) as Vitality;
           break;
       }
     }
   }
   
-  // レベルアップボーナス（レベルごとに各属性+2）
+  // レベルアップボーナス（レベル毎に全属性+2）
   const levelBonus = (player.level - 1) * 2;
-  total.strength = (total.strength + levelBonus) as any;
-  total.intelligence = (total.intelligence + levelBonus) as any;
-  total.dexterity = (total.dexterity + levelBonus) as any;
-  total.vitality = (total.vitality + levelBonus) as any;
+  baseAttributes.strength = (baseAttributes.strength + levelBonus) as Strength;
+  baseAttributes.intelligence = (baseAttributes.intelligence + levelBonus) as Intelligence;
+  baseAttributes.dexterity = (baseAttributes.dexterity + levelBonus) as Dexterity;
+  baseAttributes.vitality = (baseAttributes.vitality + levelBonus) as Vitality;
   
-  return total;
+  return baseAttributes;
 };
 
-// プレイヤーの合計属性耐性を計算
-export const calculateTotalElementResistance = (player: Player): ElementResistance => {
-  const total = { ...player.elementResistance };
-  
-  // 装備からの属性耐性を加算
-  for (const [_, item] of player.equipment) {
-    const allModifiers = [
-      ...(item.baseItem.baseModifiers || []),
-      ...(item.prefix?.modifiers || []),
-      ...(item.suffix?.modifiers || []),
-      ...(item.modifiers || [])
-    ];
-    
-    for (const mod of allModifiers) {
-      if (mod.type === "ElementResistance") {
-        total[mod.element] = Math.min(75, total[mod.element] + mod.value); // 最大75%
-      }
-    }
-  }
-  
-  return total;
-};
-
-// 実際の攻撃ダメージ計算
-export const calculateAttackDamage = (
-  attacker: Player,
-  target: Monster,
-  isCritical: boolean = false
+// 武器による物理ダメージ計算
+export const calculatePhysicalDamage = (
+  player: Player,
+  element: ElementType = "Physical"
 ): { damage: number; element: ElementType } => {
-  const totalAttributes = calculateTotalAttributes(attacker);
-  const mainWeapon = attacker.equipment.get("MainHand");
+  const attributes = calculateTotalAttributes(player);
+  const mainWeapon = player.equipment.get("MainHand");
+  const weaponScaling = mainWeapon?.baseItem.weaponScaling;
   
-  // 武器ダメージを計算
-  const weaponDamage = calculateWeaponDamage(mainWeapon, totalAttributes);
+  // ベースダメージを計算
+  const baseDamage = calculateBaseDamageFromStats(
+    player.baseStats,
+    attributes,
+    weaponScaling
+  );
   
-  // クリティカル計算
-  const stats = calculateTotalStats(attacker);
-  const critMultiplier = isCritical ? stats.criticalDamage : 1;
-  
-  // 基本ダメージ
-  let totalDamage = weaponDamage * critMultiplier;
-  
-  // 防御力による軽減
-  const defenseReduction = target.stats.defense / (target.stats.defense + 100);
-  totalDamage = Math.floor(totalDamage * (1 - defenseReduction));
-  
-  // 属性決定
-  const element = mainWeapon?.baseItem.elementType || "Physical";
-  
-  // 属性耐性による計算
-  const finalDamage = calculateElementalDamage(totalDamage, element, target.elementResistance);
+  // 属性修正を取得
+  const elementModifiers = calculateTotalElementModifiers(player);
+  const elementModifier = elementModifiers[element];
   
   return {
-    damage: Math.max(1, finalDamage) as Damage,
+    damage: Math.floor(baseDamage * elementModifier),
     element
   };
 };
@@ -179,41 +190,140 @@ export const calculateSkillDamage = (
   player: Player,
   baseDamage: number,
   scaling: number,
-  element: ElementType,
-  target?: Monster
+  element: ElementType
 ): number => {
-  const totalAttributes = calculateTotalAttributes(player);
-  const stats = calculateTotalStats(player);
+  // 引数の検証
+  if (!Number.isFinite(baseDamage)) {
+    throw new Error(`Invalid baseDamage: ${baseDamage}`);
+  }
+  if (!Number.isFinite(scaling)) {
+    throw new Error(`Invalid scaling: ${scaling}`);
+  }
+  if (!element) {
+    throw new Error(`Invalid element: ${element}`);
+  }
+  
+  const attributes = calculateTotalAttributes(player);
   const mainWeapon = player.equipment.get("MainHand");
   
-  // 武器タイプに応じたスケーリング計算
-  let scalingDamage = 0;
+  // 基礎ダメージ
+  let damage = baseDamage;
   
+  // スキルパワーによる増幅
+  const stats = calculateTotalStats(player);
+  const skillPowerMultiplier = 1 + (stats.skillPower / 100);
+  
+  // NaNチェック
+  if (!Number.isFinite(skillPowerMultiplier)) {
+    throw new Error(`Invalid skillPowerMultiplier: ${skillPowerMultiplier}, skillPower: ${stats.skillPower}`);
+  }
+  
+  damage *= skillPowerMultiplier;
+  
+  // ステータススケーリング
   if (mainWeapon && mainWeapon.baseItem.weaponScaling) {
     const weaponScaling = mainWeapon.baseItem.weaponScaling;
+    let scalingDamage = 0;
     
-    // 武器のスケーリングに基づいてダメージを計算
     if (weaponScaling.strength) {
-      scalingDamage += totalAttributes.strength * weaponScaling.strength;
+      scalingDamage += attributes.strength * weaponScaling.strength;
     }
     if (weaponScaling.intelligence) {
-      scalingDamage += totalAttributes.intelligence * weaponScaling.intelligence;
+      scalingDamage += attributes.intelligence * weaponScaling.intelligence;
     }
     if (weaponScaling.dexterity) {
-      scalingDamage += totalAttributes.dexterity * weaponScaling.dexterity;
+      scalingDamage += attributes.dexterity * weaponScaling.dexterity;
     }
+    
+    damage += scalingDamage * scaling;
   } else {
-    // 武器なしの場合はINTベースのスキルパワー計算
-    scalingDamage = stats.skillPower + (totalAttributes.intelligence * 0.5);
+    // デフォルトはINTスケーリング
+    damage += attributes.intelligence * scaling;
   }
   
-  // ダメージ計算
-  let damage = baseDamage + (scalingDamage * scaling);
+  // 属性修正を適用
+  const elementModifiers = calculateTotalElementModifiers(player);
+  const elementModifier = elementModifiers[element];
   
-  // ターゲットがいる場合は属性耐性を適用
-  if (target) {
-    damage = calculateElementalDamage(damage, element, target.elementResistance);
+  // 最終的なダメージ計算前のチェック
+  if (!Number.isFinite(damage)) {
+    throw new Error(`Invalid damage before element modifier: ${damage}`);
+  }
+  if (!Number.isFinite(elementModifier)) {
+    throw new Error(`Invalid elementModifier for ${element}: ${elementModifier}`);
   }
   
-  return Math.max(1, Math.floor(damage));
+  const finalDamage = Math.floor(damage * elementModifier);
+  
+  // 最終結果の検証
+  if (!Number.isFinite(finalDamage)) {
+    throw new Error(`Invalid finalDamage: ${finalDamage}, damage: ${damage}, elementModifier: ${elementModifier}`);
+  }
+  
+  return finalDamage;
+};
+
+// 総合ステータスを計算（互換性のため）
+export const calculateTotalStats = (player: Player): CharacterStats => {
+  // baseStatsが未定義の場合のデフォルト値
+  const stats = player.baseStats ? { ...player.baseStats } : {
+    maxHealth: 100 as Health,
+    baseDamage: 10 as Damage,
+    criticalChance: 0.1,
+    criticalDamage: 1.5,
+    lifeSteal: 0,
+    maxMana: 50 as Mana,
+    manaRegen: 5,
+    skillPower: 0,
+  };
+  
+  const attributes = calculateTotalAttributes(player);
+  
+  // VITによるHP増加
+  const healthBonus = attributes.vitality * 5;
+  stats.maxHealth = (isNaN(stats.maxHealth) ? 100 : stats.maxHealth + healthBonus) as Health;
+  
+  // INTによるMP増加
+  const manaBonus = attributes.intelligence * 3;
+  stats.maxMana = (isNaN(stats.maxMana) ? 50 : stats.maxMana + manaBonus) as Mana;
+  
+  // DEXによるクリティカル率増加
+  stats.criticalChance = stats.criticalChance + attributes.dexterity * 0.005;
+  
+  // 装備からのステータスボーナス
+  for (const [, item] of player.equipment) {
+    const allModifiers = [
+      ...item.baseItem.baseModifiers,
+      ...(item.prefix?.modifiers || []),
+      ...(item.suffix?.modifiers || []),
+    ];
+    
+    for (const mod of allModifiers) {
+      switch (mod.type) {
+        case "IncreaseHealth":
+          stats.maxHealth = (stats.maxHealth + mod.value) as Health;
+          break;
+        case "IncreaseMana":
+          stats.maxMana = (stats.maxMana + mod.value) as Mana;
+          break;
+        case "CriticalChance":
+          stats.criticalChance += mod.percentage;
+          break;
+        case "CriticalDamage":
+          stats.criticalDamage += mod.multiplier;
+          break;
+        case "LifeSteal":
+          stats.lifeSteal += mod.percentage;
+          break;
+        case "ManaRegen":
+          stats.manaRegen += mod.value;
+          break;
+        case "SkillPower":
+          stats.skillPower += mod.percentage;
+          break;
+      }
+    }
+  }
+  
+  return stats;
 };

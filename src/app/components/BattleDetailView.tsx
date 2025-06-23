@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { Box, Text, useInput } from "ink";
 import type { Session, BattleEvent } from "../../core/types.ts";
 import { getItemDisplayName, getItemStats } from "../../core/loot.ts";
-import { calculateTotalStats } from "../../core/combat.ts";
 import { formatGold, calculateItemValue } from "../../core/item-value.ts";
-import { calculateTotalAttributes } from "../../core/damage.ts";
+import { calculateTotalAttributes, calculateTotalStats } from "../../core/damage.ts";
 import { useSelection } from "../hooks/useSelection.ts";
 import { Pagination } from "./Pagination.tsx";
 
@@ -21,8 +20,12 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
   color,
   width = 30,
 }) => {
-  const percentage = Math.max(0, Math.min(100, Math.round((current / max) * 100))) || 0;
-  const filled = Math.max(0, Math.min(width, Math.round((current / max) * width))) || 0;
+  // NaN、undefined、nullを安全に処理
+  const safeCurrentHealth = Number.isFinite(current) ? current : 0;
+  const safeMaxHealth = Number.isFinite(max) && max > 0 ? max : 1; // 0で除算を防ぐ
+  
+  const percentage = Math.max(0, Math.min(100, Math.round((safeCurrentHealth / safeMaxHealth) * 100)));
+  const filled = Math.max(0, Math.min(width, Math.round((safeCurrentHealth / safeMaxHealth) * width)));
   const empty = Math.max(0, width - filled);
 
   return (
@@ -30,12 +33,12 @@ const HealthBar: React.FC<{ current: number; max: number; label: string; color: 
       <Text color={color}>{label}: </Text>
       <Text color={color}>{"█".repeat(filled)}</Text>
       <Text dimColor>{"░".repeat(empty)}</Text>
-      <Text> {current}/{max} ({percentage}%)</Text>
+      <Text> {safeCurrentHealth}/{safeMaxHealth} ({percentage}%)</Text>
     </Box>
   );
 };
 
-type LogFilter = "all" | "damage" | "heal" | "loot" | "skill" | "system";
+type LogFilter = "all" | "combat" | "loot" | "event";
 
 const BattleLogWithSelection: React.FC<{ 
   eventsWithId: Array<{ event: BattleEvent; id: string }>; 
@@ -141,7 +144,7 @@ const LogDetailView: React.FC<{
             
             <Box marginTop={1}>
               <Text bold>ダメージ計算:</Text>
-              <Text dimColor>武器ダメージ: {playerStats.damage}</Text>
+              <Text dimColor>基礎ダメージ: {playerStats.baseDamage}</Text>
               {event.isCritical && (
                 <Text dimColor>クリティカル倍率: x{playerStats.criticalDamage.toFixed(1)}</Text>
               )}
@@ -167,8 +170,8 @@ const LogDetailView: React.FC<{
             <Box marginTop={1}>
               <Text bold>ダメージ計算:</Text>
               <Text dimColor>攻撃者: {event.attackerName}</Text>
-              <Text dimColor>プレイヤー防御力: {playerStats.defense}</Text>
-              <Text dimColor>ダメージ軽減: {Math.round((playerStats.defense / (playerStats.defense + 100)) * 100)}%</Text>
+              <Text dimColor>プレイヤーVIT: {totalAttributes.vitality}</Text>
+              <Text dimColor>物理耐性: {session.player.elementResistance.Physical}%</Text>
             </Box>
             
             <Box marginTop={1}>
@@ -350,16 +353,17 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
       switch (logFilter) {
         case "all":
           return true;
-        case "damage":
-          return event.type === "PlayerAttack" || event.type === "MonsterAttack" || event.type === "SkillDamage";
-        case "heal":
-          return event.type === "PlayerHeal" || event.type === "SkillHeal" || event.type === "ManaRegenerated";
+        case "combat":
+          return event.type === "PlayerAttack" || event.type === "MonsterAttack" || 
+                 event.type === "SkillDamage" || event.type === "PlayerHeal" || 
+                 event.type === "SkillHeal" || event.type === "ManaRegenerated" ||
+                 event.type === "SkillUsed" || event.type === "NotEnoughMana";
         case "loot":
           return event.type === "ItemDropped" || event.type === "GoldDropped";
-        case "skill":
-          return event.type === "SkillUsed" || event.type === "SkillDamage" || event.type === "SkillHeal" || event.type === "NotEnoughMana";
-        case "system":
-          return event.type === "MonsterDefeated" || event.type === "PlayerLevelUp" || event.type === "PlayerDefeated" || event.type === "WaveStart" || event.type === "WaveCleared";
+        case "event":
+          return event.type === "MonsterDefeated" || event.type === "PlayerLevelUp" || 
+                 event.type === "PlayerDefeated" || event.type === "WaveStart" || 
+                 event.type === "WaveCleared";
         default:
           return true;
       }
@@ -389,7 +393,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
     
     // 左右キーでログフィルター切り替え（詳細表示中は無効）
     if (!showDetail && (key.leftArrow || key.rightArrow)) {
-      const filters: LogFilter[] = ["all", "damage", "heal", "loot", "skill", "system"];
+      const filters: LogFilter[] = ["all", "combat", "loot", "event"];
       const currentIndex = filters.indexOf(logFilter);
       if (key.leftArrow) {
         const newIndex = currentIndex > 0 ? currentIndex - 1 : filters.length - 1;
@@ -448,7 +452,8 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
               color="blue"
             />
             <Box marginTop={1} flexDirection="column">
-              <Text>攻撃力: {playerStats.damage} 防御力: {playerStats.defense}</Text>
+              <Text>基礎ダメージ: {playerStats.baseDamage}</Text>
+              <Text dimColor>STR: {session.player.baseAttributes.strength} INT: {session.player.baseAttributes.intelligence}</Text>
             </Box>
           </Box>
         </Box>
@@ -479,13 +484,16 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
       </Box>
 
       {/* スキルクールダウンタイマー */}
-      {session.player.skills.length > 0 && (
+      {session.player.skills && session.player.skills.filter(s => s.type === "Active").length > 0 && (
         <Box borderStyle="single" padding={1} marginBottom={1}>
-          <Text bold underline>スキル状態</Text>
+          <Text bold underline>アクティブスキル</Text>
           <Box flexDirection="row" marginTop={1} flexWrap="wrap">
-            {session.player.skills.slice(0, 6).map((skill) => {
-              const cooldown = session.player.skillCooldowns.get(skill.id) || 0;
-              const timer = session.player.skillTimers.get(skill.id) || 0;
+            {(session.player.skills || [])
+              .filter(skill => skill.type === "Active")
+              .slice(0, 6)
+              .map((skill) => {
+              const cooldown = session.player.skillCooldowns?.get(skill.id) || 0;
+              const timer = session.player.skillTimers?.get(skill.id) || 0;
               const isReady = cooldown === 0 && timer === 0;
               
               return (
@@ -511,6 +519,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
           padding={1} 
           width={showDetail ? "50%" : "100%"}
           marginRight={showDetail ? 1 : 0}
+          height={18}
         >
           <Box flexDirection="column" height="100%">
             <Box>
@@ -523,11 +532,9 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
               {(() => {
                 const tabs = [
                   { key: "all", label: "全て" },
-                  { key: "damage", label: "ダメージ" },
-                  { key: "heal", label: "回復" },
+                  { key: "combat", label: "戦闘" },
                   { key: "loot", label: "アイテム" },
-                  { key: "skill", label: "スキル" },
-                  { key: "system", label: "システム" },
+                  { key: "event", label: "イベント" },
                 ];
                 
                 return tabs.map((tab, index) => (
@@ -545,7 +552,7 @@ export const BattleDetailView: React.FC<Props> = ({ session, battleLog, isPaused
               })()}
             </Box>
             
-            <Box marginTop={1} flexGrow={1} overflow="hidden">
+            <Box marginTop={1} flexGrow={1} overflow="hidden" height={13}>
               <BattleLogWithSelection 
                 eventsWithId={displayEventsWithId} 
                 selectedId={selectedId}
