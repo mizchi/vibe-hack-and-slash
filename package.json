@@ -12,6 +12,8 @@
     "poc:ink-no-input": "tsx poc/02-ink-no-input.tsx",
     "poc:render-string": "tsx poc/03-render-string/index.tsx",
     "poc:render-string:test": "tsx poc/03-render-string/test.tsx",
+    "poc:ink-ui": "tsx poc/03-ink-ui-examples.tsx",
+    "poc:autocomplete": "tsx poc/04-text-autocomplete.tsx",
     "build": "tsc",
     "test": "vitest run",
     "test:battle": "vitest run src/core/__tests__/combat.test.ts src/core/__tests__/damage.test.ts",
@@ -43,6 +45,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@inkjs/ui": "^2.0.0",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.14",
     "@types/react-dom": "^18.3.0",
